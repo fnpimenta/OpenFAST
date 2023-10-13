@@ -1,3 +1,63 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from matplotlib import cm
+import os 
+
+from copy import deepcopy
+from scipy.integrate import odeint
+from scipy.signal import find_peaks
+from scipy import signal
+
+from PIL import Image
+
+from io import StringIO
+from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit
+
+from ipywidgets import *
+from IPython.display import display, HTML
+
+pi = np.pi
+
+tabs = st.sidebar.tabs(["📈 File upload" , "📈 Data analysis" , "🌊 File generator"])
+
+tab1 = tabs[0]
+tab2 = tabs[1]
+tab3 = tabs[2]
+
+# -- Load data files
+@st.cache_data()
+def load_data(uploaded_files,n1,n2):
+
+    try:
+        data = pd.read_csv(uploaded_file,skiprows=n1,nrows=n2-n1,delimiter="\s+",encoding_errors='replace')
+
+        error_check += 1
+    except:
+        tab1.write('Please select the file for analysis')
+        data = 0
+
+    return data 
+
+uploaded_file = tab1.file_uploader("Choose a file",accept_multiple_files=False)
+
+count = 0
+for line in uploaded_file:
+    count += 1
+    if bytes("DISTRIBUTED TOWER PROPERTIES", 'utf-8') in line:
+        n1 = count
+    if bytes('TOWER FORE-AFT MODE SHAPES', 'utf-8') in line:
+        n2 = count
+
+uploaded_file.seek(0)
+tower = pd.read_csv(uploaded_file,skiprows=np.concatenate((np.arange(n1),[n1+1])),nrows=n2-n1-3,delimiter='\s+',on_bad_lines='skip',encoding_errors='ignore')
+
+tab1.write(tower)
+
+
 def ModeFit(h,a2,a3,a4,a5):
     a6 = (1-a2-a3-a4-a5)
     return a2*h**2 + a3*h**3 + a4*h**4 + a5*h**5 + a6*h**6
@@ -74,11 +134,13 @@ def ModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
     w,v = np.linalg.eig(np.linalg.inv(MassMatrix)@StiffMatrix)
     freq = np.sqrt(w)/(2*pi)
     
-    plt.figure(figsize = (16,10))
-    gs = gridspec.GridSpec(2,2)
-    gs.update(hspace=0)
+    fig = plt.figure(figsize = (12,12))
+    gs = gridspec.GridSpec(3,2)
+    gs.update(hspace=0,wspace=0.5)
     ax1 = plt.subplot(gs[0,0])
-    ax3 = plt.subplot(gs[:,1])
+    ax3 = plt.subplot(gs[:-1,1])
+
+    axl = plt.subplot(gs[-1,:])
     
     ax1.plot(rs_h,rs_m,'darkblue',linewidth=1)
     for i in range(N):
@@ -148,46 +210,29 @@ def ModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
 
         ax3.plot(fitmode/fitmode[-1]*mode[-1],rs_h,'--',color=colors[i-1])
         ax3.plot(0,0,'--o',color=colors[i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[-i],phi)) 
+        axl.plot(0,0,'--',color=colors[i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[-i],phi)) 
 
-    ax3.legend(loc='lower left',
-               bbox_to_anchor=(-1.2,0),
+    axl.axis('off')
+    axl.legend(loc='upper left',
+               bbox_to_anchor=(0,0.8),
                ncol=1,
                fancybox=False,
                framealpha=1,
-               frameon=False)
+               frameon=False,
+               fontsize=14)
+
+    st.pyplot(fig)  
     return 
 
-def ModesEstimator(filename):
-    '''
-    Interactive estimator of the mode shapes for a wind turbine tower. 
 
-    Parameters
-    ----------
-    filename : string
-        File containing the mass and stiffness evolution of the tower over its height.
-    '''
-    if not(type(filename)==str):
-        print('Error loading data. Input is not a string.')
-        return
-    else:
-        if filename[-4:]=='.csv':
-            data = pd.read_csv(filename, sep=',',header=0,on_bad_lines='skip',skiprows=[1],encoding_errors='replace')
-        else:
-            data = pd.read_csv(filename + '.csv', sep=',',header=0,on_bad_lines='skip',skiprows=[1],encoding_errors='replace')
-        n_calc = IntSlider(value=20,min=0,max=100,description='N points:',continuous_update=False,readout=True)   
-        n_plot = IntSlider(value=4,min=0,max=4,description='N plot:',continuous_update=False,readout=True)   
-        m_top = FloatText(value=50000,description='Top m. (kg):',disabled=False)
-        L = FloatText(value=100,description='H (m):',disabled=False)
-        def n_calc_change(change):
-            if n_calc.value<4:
-                n_plot.max = n_calc.value
+cols = st.columns(4)
 
-        n_calc.observe(n_calc_change, names='value')
+n_modes = cols[0].number_input('Number of modes',3,None,4)
+N = cols[1].number_input('Number of points',10,None,20)
+mtop = cols[2].number_input('Rotor mass',0,None,0)
+L= cols[3].number_input('Tower height',10,None,100)
 
-        diagrams = widgets.interactive_output(ModesPlot, {'h':fixed(np.array(data.iloc[:,0])),
-                                                          'mass':fixed(np.array(data.iloc[:,1])),
-                                                          'stiff':fixed(np.array(data.iloc[:,2])),
-                                                          'N':n_calc,'n_plot':n_plot,'L':L,'mtop':m_top})
-        display(VBox([HBox([n_calc,m_top,L]),n_plot,diagrams]))   
-
-        return
+ModesPlot(np.array(tower.iloc[:,0]),
+          np.array(tower.iloc[:,1]),
+          np.array(tower.iloc[:,2]),
+          N=N,n_plot=n_modes,L=L,mtop=mtop)

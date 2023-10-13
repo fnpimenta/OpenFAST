@@ -4,16 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-import mpld3
-import streamlit.components.v1 as components
-
 from copy import deepcopy
 from scipy.integrate import odeint
 from scipy.signal import find_peaks
 from scipy import signal
 
 from PIL import Image
-
 
 # -- Set page config
 apptitle = 'OpenFAST API'
