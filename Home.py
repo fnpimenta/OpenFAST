@@ -22,8 +22,17 @@ st.title('OpenFAST analysis')
 
 st.markdown("""
  * Use the menu at left to select data from the different analysis possibilities
- * To tune the analysis parameters use the **Analysis** tab
+ * To tune the analysis parameters use the **Ahttp://localhost:8501/Homenalysis** tab
 """)
 
-st.sidebar.success("Select an analysis above.")
 
+
+with st.sidebar:
+    st.title("Gallery")
+
+    with st.expander("✨ File explorer", True):
+        st.checkbox('a',value=False)
+
+    with st.expander("🧩 Course Tasks", True):
+        st.checkbox('b',value=False)
+page.show()

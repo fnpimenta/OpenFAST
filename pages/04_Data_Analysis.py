@@ -12,7 +12,7 @@ from scipy import signal
 from PIL import Image
 
 # -- Set page config
-apptitle = 'OpenFAST API'
+apptitle = 'OpenFAST API - Data analysis'
 icon = Image.open("logo.ico")
 st.set_page_config(page_title=apptitle, page_icon=icon)
 

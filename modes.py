@@ -4,96 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib import cm
-import os 
-
-from copy import deepcopy
-from scipy.integrate import odeint
-from scipy.signal import find_peaks
-from scipy import signal
-
-from io import StringIO
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
-from ipywidgets import *
-from IPython.display import display, HTML
-
 pi = np.pi
-
-from PIL import Image
-
-# -- Set page config
-apptitle = 'OpenFAST API - Modes estimator'
-icon = Image.open(".\logo.ico")
-st.set_page_config(page_title=apptitle, page_icon=icon , layout="wide")
-
-
-# -- File type definition (tab1)
-file_mode = ["📈 Upload file" , "📈 Select from database"]
-page = st.sidebar.selectbox('Input data file', file_mode)
-
-# -- Load data files
-@st.cache_data()
-def load_data(uploaded_files,n1,n2):
-    try:
-        data = pd.read_csv(uploaded_file,skiprows=n1,nrows=n2-n1,delimiter="\s+",encoding_errors='replace')
-        error_check += 1
-    except:
-        tab1.write('Please select the file for analysis')
-        data = 0
-
-    return data 
-
-if page == file_mode[0]:
-    uploaded_file = st.sidebar.file_uploader("Choose a file",accept_multiple_files=False)
-
-    count = 0
-    for line in uploaded_file:
-        count += 1
-        if bytes("DISTRIBUTED", 'utf-8') in line:
-            n1 = count
-            if "TOWER" in line:
-                element_type = 'tower'
-            else:
-                element_type = 'blade'
-        if bytes('MODE SHAPES', 'utf-8') in line:
-            n2 = count
-
-    uploaded_file.seek(0)
-    tower = pd.read_csv(uploaded_file,skiprows=np.concatenate((np.arange(n1),[n1+1])),nrows=n2-n1-3,delimiter='\s+',on_bad_lines='skip',encoding_errors='ignore')
-
-
-else:
-    # -- Load data files
-    ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-    ref_model = st.sidebar.selectbox('Reference model', ref_models)
-    ref_path = ref_models[ref_model]
-
-    all_dir = os.listdir('./OpenFAST_models/' + ref_path )
-    sel_dir = st.sidebar.selectbox('Available modules', all_dir)
-
-    all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
-    uploaded_file = st.sidebar.selectbox('Available files', all_files)
-
-    log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + uploaded_file, 'r')
-    count = 0
-    for line in log:
-        count += 1
-        if 'DISTRIBUTED' in line:
-            n1 = count
-            if "TOWER" in line:
-                element_type = 'tower'
-            else:
-                element_type = 'blade'
-        if 'MODE SHAPES' in line:
-            n2 = count
-
-    tower = pd.read_csv('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + uploaded_file,skiprows=np.concatenate((np.arange(n1),[n1+1])),nrows=n2-n1-3,delimiter='\s+',on_bad_lines='skip',encoding_errors='ignore')
-
-
-
-
-st.sidebar.write(tower)
 
 
 def ModeFit(h,a2,a3,a4,a5):
@@ -126,59 +40,52 @@ def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
     StiffMatrix = np.zeros_like(MassMatrix)
     
     KMatrix = np.zeros((2*N,2*N))
-    for i in range(N-1):
+    for i in range(N):
         L1 = points[i+1]-points[i]
         EI1 = si[i]
 
-        L2 = points[i+2]-points[i+1]
-        EI2 = si[i+1]
-       
-        KMatrix[2*i,2*i] += 12*EI1/L1**3 + 12*EI2/L2**3
-        KMatrix[2*i,2*i+1] += 6*EI2/L2**2 - 6*EI1/L1**2
-        
-        KMatrix[2*i+1,2*i] += 6*EI2/L2**2 - 6*EI1/L1**2
-        KMatrix[2*i+1,2*i+1] += 4*EI1/L1 + 4*EI2/L2
-        
-        KMatrix[2*i,2*i+2] += -12*EI2/L2**3
-        KMatrix[2*i+2,2*i] += -12*EI2/L2**3
+        if i<(N-1):
+            L2 = points[i+2]-points[i+1]
+            EI2 = si[i+1]
 
-        KMatrix[2*i,2*i+3] += 6*EI2/L2**2
-        KMatrix[2*i+3,2*i] += 6*EI2/L2**2        
+            KMatrix[2*i,2*i] += (12*EI1/L1**3 + 12*EI2/L2**3) * 1/2
+            KMatrix[2*i+1,2*i+1] += (4*EI1/L1 + 4*EI2/L2) * 1/2
+            KMatrix[2*i,2*i+1] += 6*EI2/L2**2 - 6*EI1/L1**2
+
+        else:
+            KMatrix[2*i,2*i] += (12*EI1/L1**3) * 1/2
+            KMatrix[2*i+1,2*i+1] += (4*EI1/L1) * 1/2
+            KMatrix[2*i,2*i+1] += -6*EI1/L1**2
         
-        KMatrix[2*i+1,2*i+2] += -6*EI2/L2**2
-        KMatrix[2*i+2,2*i+1] += -6*EI2/L2**2
+        if i<(N-1):
 
-        KMatrix[2*i+1,2*i+3] += 2*EI2/L2
-        KMatrix[2*i+3,2*i+1] += 2*EI2/L2          
-    
-    KMatrix[-2,-2] += +12*EI2/L2**3
-    KMatrix[-2,-1] +=  -6*EI2/L2**2    
+            KMatrix[2*i,2*i+2] += -12*EI2/L2**3
+            KMatrix[2*i,2*i+3] += 6*EI2/L2**2
+            KMatrix[2*i+1,2*i+2] += -6*EI2/L2**2
+            KMatrix[2*i+1,2*i+3] += 2*EI2/L2
 
-    KMatrix[-1,-2] += -6*EI2/L2**2
-    KMatrix[-1,-1] += +4*EI2/L2          
+    KMatrix += KMatrix.T
+
     Kinv = np.linalg.inv(KMatrix) 
 
-    CMatrix = np.zeros((N,N))
-    for i in range(N):
-        CMatrix[i,:] = Kinv[2*i,0::2]
-        
-    KMatrix = np.linalg.inv(CMatrix)
+    CMatrix = Kinv[::2,::2]
+    StiffMatrix = np.linalg.inv(CMatrix)
 
-    for i in range(N):
-        fv = np.zeros(N)
-        fv[i] = 1
-        StiffMatrix[:,i] = KMatrix@fv
-        
+    #for i in range(N):
+    #    fv = np.zeros(N)
+    #    fv[i] = 1
+    #    StiffMatrix[:,i] = KMatrix@fv
+
     w,v = np.linalg.eig(np.linalg.inv(MassMatrix)@StiffMatrix)
     freq = np.sqrt(w)/(2*pi)
     
-    fig = plt.figure(figsize = (12,12))
-    gs = gridspec.GridSpec(3,2)
-    gs.update(hspace=0,wspace=0.5)
-    ax1 = plt.subplot(gs[0,0])
-    ax3 = plt.subplot(gs[:-1,1])
+    fig = plt.figure(figsize = (12,9))
+    gs = gridspec.GridSpec(3,3)
+    gs.update(hspace=0,wspace=0.3)
+    ax1 = plt.subplot(gs[0:-1,1:])
+    ax3 = plt.subplot(gs[:,0])
 
-    axl = plt.subplot(gs[-1,:])
+    axl = plt.subplot(gs[-1,1:])
     
     ax1.plot(rs_h,rs_m,'darkred',linewidth=1)
     for i in range(N):
@@ -251,29 +158,31 @@ def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
         axl.plot(0,0,'--',color=colors[i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[-i],phi)) 
 
     axl.axis('off')
-    axl.legend(loc='upper left',
-               bbox_to_anchor=(0,0.8),
+    axl.legend(loc='lower left',
+               bbox_to_anchor=(-0.1,0),
                ncol=1,
                fancybox=False,
                framealpha=1,
                frameon=False,
-               fontsize=14)
+               fontsize=12)
 
     st.pyplot(fig)  
     return 
 
-def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
+def BladesModesPlot(h,mass,stiff_edge,stiff_wise,twist,N=2,n_plot=2,L=100,mtop=0):
     seg = np.linspace(0,1,N+1)*L
 
     f_m = interp1d(h*L,mass)
     f_se = interp1d(h*L,stiff_edge)   
     f_sw = interp1d(h*L,stiff_wise)    
+    f_tw = interp1d(h*L,twist)    
      
     points = np.linspace(0,1,N+1)*L
 
     mi = f_m(points)
     sie = f_se(points)
     siw = f_sw(points)
+    thetas = f_tw(points)
     
     mi = mi[1:]/2 + mi[:-1]/2
     sie = sie[1:]/2 + sie[:-1]/2
@@ -295,92 +204,115 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
     StiffMatrix = np.zeros_like(MassMatrix)
 
     KMatrix = np.zeros((4*N,4*N))
-    for i in range(N-1):
+
+    for i in range(N):
+        theta = thetas[i]*pi/180*0
+        c = np.cos(theta)
+        s = np.sin(theta)
+        
         L1 = points[i+1]-points[i]
-        EI1 = sie[i]
+        EI1x = sie[i]
+        EI1y = siw[i]
 
-        L2 = points[i+2]-points[i+1]
-        EI2 = sie[i+1]
-       
-        KMatrix[2*i,2*i] += 12*EI1/L1**3 + 12*EI2/L2**3
-        KMatrix[2*i,2*i+1] += 6*EI2/L2**2 - 6*EI1/L1**2
+        if i<(N-1):
+            L2 = points[i+2]-points[i+1]
+            EI2x = sie[i+1]
+            EI2y = siw[i+1]
+
+            KMatrix[2*i,2*i] += ((12*EI1x/L1**3 + 12*EI2x/L2**3) * 1/2) * c**2 + ((12*EI1y/L1**3 + 12*EI2y/L2**3) * 1/2) * s**2 
+            KMatrix[2*i,2*i+2*N] += ((12*EI1x/L1**3 + 12*EI2x/L2**3) - (12*EI1y/L1**3 + 12*EI2y/L2**3)) * c*s 
+            
+            KMatrix[2*i+1,2*i+1] += ((4*EI1x/L1 + 4*EI2x/L2) * 1/2) * c**2 + ((4*EI1y/L1 + 4*EI2y/L2) * 1/2) * s**2
+            KMatrix[2*i+1,2*i+1+2*N] += ((4*EI1x/L1 + 4*EI2x/L2)  - (4*EI1y/L1 + 4*EI2y/L2)) * c*s
+
+            KMatrix[2*i,2*i+1] += (6*EI2x/L2**2 - 6*EI1x/L1**2) * c**2 + (6*EI2y/L2**2 - 6*EI1y/L1**2) * s**2
+            KMatrix[2*i,2*i+1+2*N] += ((6*EI2x/L2**2 - 6*EI1x/L1**2) - (6*EI2y/L2**2 - 6*EI1y/L1**2)) * c*s
+
+        else:
+            KMatrix[2*i,2*i] += ((12*EI1x/L1**3) * 1/2) * c**2 + ((12*EI1y/L1**3) * 1/2) * s**2
+            KMatrix[2*i,2*i+2*N] += (12*EI1x/L1**3 - 12*EI1y/L1**3) * c*s 
+            
+            KMatrix[2*i+1,2*i+1] += ((4*EI1x/L1) * 1/2) * c**2 + ((4*EI1y/L1) * 1/2) * s**2
+            KMatrix[2*i+1,2*i+1+2*N] += (4*EI1x/L1  - 4*EI1y/L1) * c*s
+
+            KMatrix[2*i,2*i+1] += (-6*EI1x/L1**2) * c**2 + (-6*EI1y/L1**2) * s**2
+            KMatrix[2*i,2*i+1+2*N] += ((-6*EI1x/L1**2) - (-6*EI1y/L1**2)) * c*s
+
+        if i<(N-1):
+
+            KMatrix[2*i,2*i+2] += (-12*EI2x/L2**3)* c**2 + (-12*EI2y/L2**3)* s**2 
+            KMatrix[2*i,2*i+2+2*N] += ((-12*EI2x/L2**3) - (-12*EI2y/L2**3))* c*s 
+
+            KMatrix[2*i,2*i+3] += (6*EI2x/L2**2) * c**2 + (6*EI2y/L2**2) * s**2 
+            KMatrix[2*i,2*i+3+2*N] += ((6*EI2x/L2**2) - (6*EI2y/L2**2)) * c*s 
+
+            KMatrix[2*i+1,2*i+2] += (-6*EI2x/L2**2) * c**2 + (-6*EI2y/L2**2) * s**2
+            KMatrix[2*i+1,2*i+2+2*N] += ((-6*EI2x/L2**2) - (-6*EI2y/L2**2)) * c*s
+
+            KMatrix[2*i+1,2*i+3] += (2*EI2x/L2) * c**2 + (2*EI2y/L2) * s**2
+            KMatrix[2*i+1,2*i+3+2*N] += ((2*EI2x/L2) - (2*EI2y/L2)) * c*s
+
+
+    for i in range(N):
+        theta = thetas[i]*pi/180*0
+        c = np.cos(theta)
+        s = np.sin(theta)
         
-        KMatrix[2*i+1,2*i] += 6*EI2/L2**2 - 6*EI1/L1**2
-        KMatrix[2*i+1,2*i+1] += 4*EI1/L1 + 4*EI2/L2
-        
-        KMatrix[2*i,2*i+2] += -12*EI2/L2**3
-        KMatrix[2*i+2,2*i] += -12*EI2/L2**3
-
-        KMatrix[2*i,2*i+3] += 6*EI2/L2**2
-        KMatrix[2*i+3,2*i] += 6*EI2/L2**2        
-        
-        KMatrix[2*i+1,2*i+2] += -6*EI2/L2**2
-        KMatrix[2*i+2,2*i+1] += -6*EI2/L2**2
-
-        KMatrix[2*i+1,2*i+3] += 2*EI2/L2
-        KMatrix[2*i+3,2*i+1] += 2*EI2/L2 
-
-
-    KMatrix[2*N-2,2*N-2] += +12*EI2/L2**3
-    KMatrix[2*N-2,2*N-1] +=  -6*EI2/L2**2    
-
-    KMatrix[2*N-1,2*N-2] += -6*EI2/L2**2
-    KMatrix[2*N-1,2*N-1] += +4*EI2/L2 
-
-    for i in range(N-1):
         L1 = points[i+1]-points[i]
-        EI1 = siw[i]
+        EI1x = sie[i]
+        EI1y = siw[i]
 
-        L2 = points[i+2]-points[i+1]
-        EI2 = siw[i+1]
-       
-        KMatrix[2*N+2*i,2*N+2*i] += 12*EI1/L1**3 + 12*EI2/L2**3
-        KMatrix[2*N+2*i,2*N+2*i+1] += 6*EI2/L2**2 - 6*EI1/L1**2
-        
-        KMatrix[2*N+2*i+1,2*N+2*i] += 6*EI2/L2**2 - 6*EI1/L1**2
-        KMatrix[2*N+2*i+1,2*N+2*i+1] += 4*EI1/L1 + 4*EI2/L2
-        
-        KMatrix[2*N+2*i,2*N+2*i+2] += -12*EI2/L2**3
-        KMatrix[2*N+2*i+2,2*N+2*i] += -12*EI2/L2**3
+        if i<(N-1):
+            L2 = points[i+2]-points[i+1]
+            EI2x = sie[i+1]
+            EI2y = siw[i+1]
 
-        KMatrix[2*N+2*i,2*N+2*i+3] += 6*EI2/L2**2
-        KMatrix[2*N+2*i+3,2*N+2*i] += 6*EI2/L2**2        
-        
-        KMatrix[2*N+2*i+1,2*N+2*i+2] += -6*EI2/L2**2
-        KMatrix[2*N+2*i+2,2*N+2*i+1] += -6*EI2/L2**2
+            KMatrix[2*i+2*N,2*i+2*N] += ((12*EI1x/L1**3 + 12*EI2x/L2**3) * 1/2) * s**2 + ((12*EI1y/L1**3 + 12*EI2y/L2**3) * 1/2) * c**2 
+            KMatrix[2*i+1+2*N,2*i+1+2*N] += ((4*EI1x/L1 + 4*EI2x/L2) * 1/2) * s**2 + ((4*EI1y/L1 + 4*EI2y/L2) * 1/2) * c**2
 
-        KMatrix[2*N+2*i+1,2*N+2*i+3] += 2*EI2/L2
-        KMatrix[2*N+2*i+3,2*N+2*i+1] += 2*EI2/L2          
-    
-    KMatrix[-2,-2] += +12*EI2/L2**3
-    KMatrix[-2,-1] +=  -6*EI2/L2**2    
+            KMatrix[2*i+2*N,2*i+1+2*N] += (6*EI2x/L2**2 - 6*EI1x/L1**2) * s**2 + (6*EI2y/L2**2 - 6*EI1y/L1**2) * c**2
 
-    KMatrix[-1,-2] += -6*EI2/L2**2
-    KMatrix[-1,-1] += +4*EI2/L2 
+        else:
+            KMatrix[2*i+2*N,2*i+2*N] += ((12*EI1x/L1**3) * 1/2) * s**2 + ((12*EI1y/L1**3) * 1/2) * c**2
+            
+            KMatrix[2*i+1+2*N,2*i+1+2*N] += ((4*EI1x/L1) * 1/2) * s**2 + ((4*EI1y/L1) * 1/2) * c**2
+         
+            KMatrix[2*i+2*N,2*i+1+2*N] += (-6*EI1x/L1**2) * s**2 + (-6*EI1y/L1**2) * c**2
+         
+        if i<(N-1):
+
+            KMatrix[2*i+2*N,2*i+2+2*N] += (-12*EI2x/L2**3)* s**2 + (-12*EI2y/L2**3)* c**2 
+         
+            KMatrix[2*i+2*N,2*i+3+2*N] += (6*EI2x/L2**2) * s**2 + (6*EI2y/L2**2) * c**2 
+         
+            KMatrix[2*i+1+2*N,2*i+2+2*N] += (-6*EI2x/L2**2) * s**2 + (-6*EI2y/L2**2) * c**2
+         
+            KMatrix[2*i+1+2*N,2*i+3+2*N] += (2*EI2x/L2) * s**2 + (2*EI2y/L2) * c**2
+
+    KMatrix += KMatrix.T
 
     Kinv = np.linalg.inv(KMatrix) 
-   
-    CMatrix = np.zeros((2*N,2*N))
-    for i in range(2*N):
-        CMatrix[i,:] = Kinv[2*i,0::2]
-        
-    KMatrix = np.linalg.inv(CMatrix)
 
-    for i in range(2*N):
-        fv = np.zeros(2*N)
-        fv[i] = 1
-        StiffMatrix[:,i] = KMatrix@fv
-        
+    CMatrix = Kinv[::2,::2]
+    StiffMatrix = np.linalg.inv(CMatrix)
+
+    #for i in range(2*N):
+    #    fv = np.zeros(2*N)
+    #    fv[i] = 1
+    #    StiffMatrix[:,i] = KMatrix@fv
+
     w,v = np.linalg.eig(np.linalg.inv(MassMatrix)@StiffMatrix)
 
     freq = np.sqrt(w)/(2*pi)
    
     fig = plt.figure(figsize = (12,12))
-    gs = gridspec.GridSpec(3,2)
-    gs.update(hspace=0,wspace=0.5)
-    ax1 = plt.subplot(gs[0,0])
-    ax3e = plt.subplot(gs[0,1])
-    ax3w = plt.subplot(gs[1,1])
+    gs = gridspec.GridSpec(5,4)
+    gs.update(hspace=0.1,wspace=0.1)
+    ax1 = plt.subplot(gs[0:-3,2:])
+    
+    ax3e = plt.subplot(gs[0:-2,0])
+    ax3w = plt.subplot(gs[-2,1:])
+    ax3f = plt.subplot(gs[-2,0])
 
     axl = plt.subplot(gs[-1,:])
     
@@ -414,9 +346,10 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
     ax3e.plot(points*0,points,'ok')
     ax3e.set_ylim(0,L)
 
-    ax3w.plot(h*0,h*L,'k')
-    ax3w.plot(points*0,points,'ok')
-    ax3w.set_ylim(0,L)
+
+    ax3w.plot(h*L,h*0,'k')
+    ax3w.plot(points,points*0,'ok')
+    ax3w.set_xlim(0,L)
 
     ax1.set_xlabel('Blade span (m)')
     ax1.set_title('Blade distributed properties')
@@ -460,10 +393,12 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
         ax3e.plot(fitmode/fitmode[-1]*mode_e[-1],rs_h,'--',color=colors[i-1])
             
         ax3e.plot(mode_e,points,'o',color=colors[i-1])
-        ax3w.plot(mode_w,points,'o',color=colors[i-1])
+        ax3w.plot(points,mode_w,'o',color=colors[i-1])
         ax3e.plot(0,0,'--o',color=colors[i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[N-i],phi))
         axl.plot(0,0,'--',color=colors[i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[N-i],phi)) 
 
+        ax3f.plot(mode_e,mode_w,'--.',color=colors[i-1])
+        
 
     for i in range(1,1+n_plot):
         mode_e = np.zeros(N+1)
@@ -485,12 +420,32 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
            phi += ' - %.2f$x^%d$'%(abs(1-np.sum(popt)),6)
 
         fitmode = ModeFit(rs_h/L,*popt)
-        ax3w.plot(fitmode/fitmode[-1]*mode_w[-1],rs_h,'--',color=colors[n_plot+i-1])
+        ax3w.plot(rs_h,fitmode/fitmode[-1]*mode_w[-1],'--',color=colors[n_plot+i-1])
             
         ax3e.plot(mode_e,points,'o',color=colors[n_plot+i-1])
-        ax3w.plot(mode_w,points,'o',color=colors[n_plot+i-1])
+        ax3w.plot(points,mode_w,'o',color=colors[n_plot+i-1])
         ax3w.plot(0,0,'--o',color=colors[n_plot+i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[-i],phi)) 
+
+        ax3f.plot(mode_e,mode_w,'--.',color=colors[n_plot+i-1])
+
         axl.plot(0,0,'--',color=colors[n_plot+i-1],label='$f$=%.2f Hz , $\phi(x)$:%s'%(freq[-i],phi))
+
+    max_coord = 1.1*np.max((np.max(abs(v[:,-3:])),np.max(abs(v[:,N-3:N]))))
+
+    ax3f.set_xlim(-max_coord,max_coord)
+    ax3f.set_ylim(-max_coord,max_coord)
+
+    ax3w.set_ylim(-max_coord,max_coord)
+    ax3w.set_yticklabels('')
+
+    ax3e.set_xlim(-max_coord,max_coord)
+    ax3e.set_xticklabels('')
+
+    ax3f.set_xlabel('Edgewise direction')
+    ax3f.set_ylabel('Flapwise direction')
+
+    ax3f.set_xticklabels('')
+    ax3f.set_yticklabels('')
 
     axl.axis('off')
     axl.legend(loc='upper left',
@@ -503,27 +458,3 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,N=2,n_plot=2,L=100,mtop=0):
 
     st.pyplot(fig)  
     return 
-
-
-cols = st.columns(4)
-
-n_modes = cols[0].number_input('Number of modes',2,None,3)
-N = cols[1].number_input('Number of points',5,None,20)
-mtop = cols[2].number_input('Rotor mass',0,None,0)
-L= cols[3].number_input('Tower height',10,None,100)
-
-st.write(element_type)
-
-if element_type == 'tower':
-    TowerModesPlot(np.array(tower.iloc[:,0]),
-                   np.array(tower.iloc[:,1]),
-                   np.array(tower.iloc[:,2]),
-                   N=N,n_plot=n_modes,L=L,mtop=mtop)
-else:
-    BladesModesPlot(np.array(tower.iloc[:,0]),
-          np.array(tower.iloc[:,3]),
-          np.array(tower.iloc[:,4]),
-          np.array(tower.iloc[:,5]),
-          N=N,n_plot=n_modes,L=L,mtop=mtop)
-
-    
