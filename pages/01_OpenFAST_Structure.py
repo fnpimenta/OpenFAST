@@ -10,7 +10,7 @@ from scipy.integrate import odeint
 from scipy.signal import find_peaks
 from scipy import signal
 
-from st_annotated_text import annotated_text
+from annotated_text import annotated_text
 
 from PIL import Image
 
