@@ -93,10 +93,10 @@ ref_path = ref_models['WP 1.5MW']
 all_dir = os.listdir('./OpenFAST_models/' + ref_path )
 
 file_OpenFAST = open('./OpenFAST_models/' + ref_path + '/' + 'TestFile.fst', 'r')
-file_aero = open('./OpenFAST_models/' + ref_path + '/' + all_dir[2] + '/' + 'WP_AeroDyn.dat', 'r')
-file_control =  open('./OpenFAST_models/' + ref_path + '/' + all_dir[3] + '/' + 'WP_ServoDyn.dat', 'r')
-file_wind =  open('./OpenFAST_models/' + ref_path + '/' + all_dir[1] + '/' + 'InflowWind_W0500_Steady.dat', 'r')
-file_struct = open('./OpenFAST_models/' + ref_path + '/' + all_dir[0] + '/' + 'WP_ElastoDyn.dat', 'r')
+file_aero = open('./OpenFAST_models/' + ref_path + '/' + '03_AeroDyn' + '/' + 'WP_AeroDyn.dat', 'r')
+file_control =  open('./OpenFAST_models/' + ref_path + '/' + '04_ServoDyn' + '/' + 'WP_ServoDyn.dat', 'r')
+file_wind =  open('./OpenFAST_models/' + ref_path + '/' + '02_InflowWind' + '/' + 'InflowWind_W0500_Steady.dat', 'r')
+file_struct = open('./OpenFAST_models/' + ref_path + '/' + '01_ElastoDyn' + '/' + 'WP_ElastoDyn.dat', 'r')
 #file_hydro = Image.open('figures/OpenFAST_hydro.png')
 #file_mooring = Image.open('figures/OpenFAST_mooring.png')
 
