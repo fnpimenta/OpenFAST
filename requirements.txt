@@ -4,3 +4,4 @@ scipy==1.8.1
 htbuilder
 streamlit
 twine
+htbuilder
