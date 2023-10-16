@@ -78,6 +78,7 @@ with st.expander("**Hints**",False):
 
 	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
 	sel_file = c3.selectbox('Available files', all_files, index = 1,disabled=True)
+	sel_file = 'WP_ElastoDyn.dat'
 			
 	log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
 	data = []
