@@ -10,7 +10,6 @@ from scipy.integrate import odeint
 from scipy.signal import find_peaks
 from scipy import signal
 
-from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
 from annotated_text import annotated_text,annotation
 
 from PIL import Image
