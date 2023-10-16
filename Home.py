@@ -17,7 +17,6 @@ apptitle = 'OpenFAST Course'
 icon = Image.open("logo.ico")
 st.set_page_config(page_title=apptitle, page_icon=icon , layout="wide")
 
-
 cols = st.columns(4)
 
 #cols[0].markdown("[![Foo](https://sigarra.up.pt/feup/WEB_GESSI_DOCS.download_file?p_name=F-370784536/logo_cores_oficiais.jpg),](https://sigarra.up.pt/feup/pt/web_page.inicial)")

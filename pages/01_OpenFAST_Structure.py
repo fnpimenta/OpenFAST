@@ -10,13 +10,11 @@ from scipy.integrate import odeint
 from scipy.signal import find_peaks
 from scipy import signal
 
-from annotated_text import annotated_text
-
 from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST API - Course tasks'
-icon = Image.open("logo.ico")
+icon = Image.open('logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon,layout='wide')
 
 # Title the app
@@ -112,6 +110,8 @@ PALETTE = [	"#ff4b4b",
 			"#803df5",
 			"#808495",]
 
+onshore_color = "#bada5566"
+offshore_color = "#0a75ad33"
 if tab_idx == 0:
 	data = []
 	for line in file_OpenFAST:
@@ -124,44 +124,52 @@ if tab_idx == 0:
 									   'Output'])
 
 		all_idx = range(3,11)
-		sel_idx = [5,6]
+		on_sel_idx = [5,6]
+		off_sel_idx = []
 		with tab1:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(12,20)
-		sel_idx = [12,13,14,15,16,18]
+		on_sel_idx = [12,13,14,15]
+		off_sel_idx = [16,18]
 		with tab2:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(21,32)
-		sel_idx = [21,25,26,27,28,30]
+		on_sel_idx = [21,25,26,27]
+		off_sel_idx = [28,30]
 		with tab3:
 			for i in all_idx:
-				if i in sel_idx:
-					if i>27:
-						annotated_text(annotation(data[i], "" ,PALETTE[1]+"66"))
-					else:
-						annotated_text((data[i], "" ,PALETTE[4]+"66"))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(33,41)
-		sel_idx = [12,13,14,15,16,18]
+		on_sel_idx = [36,37]
+		off_sel_idx = []
 		with tab4:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
-
+					st.write(data[i])
 
 if tab_idx == 1:
 	data = []
@@ -170,59 +178,70 @@ if tab_idx == 1:
 
 	with st.expander("**File explorer**",False):
 		tab1,tab2,tab3,tab4,tab5 = st.tabs(['Simulation Control',
-									   'Environmental conditions',
-									   'Initial conditions',
-									   'Turbine configuration',
-									   'Mass and inertia'])
+									   		'Environmental conditions',
+									   		'Initial conditions',
+									   		'Turbine configuration',
+									   		'Mass and inertia'])
 
 		all_idx = range(3,6)
-		sel_idx = []
+		on_sel_idx = []
+		off_sel_idx = []
 		with tab1:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
-		all_idx = range(9,27)
-		sel_idx = []
+		all_idx = range(9,26)
+		on_sel_idx = [9,10,11,16,17,18,19]
+		off_sel_idx = [20,21,22,23,24,25]
 		with tab2:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(27,44)
-		sel_idx = []
+		on_sel_idx = [29,30,31,34,36,37]
+		off_sel_idx = [38,39,40,41,42,43]
 		with tab3:
 			for i in all_idx:
-				if i in sel_idx:
-					if i>27:
-						annotated_text(annotation(data[i], "" ,PALETTE[1]+"66"))
-					else:
-						annotated_text((data[i], "" ,PALETTE[4]+"66"))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(45,71)
-		sel_idx = []
+		on_sel_idx = [46,47,48,49,50,65,66]
+		off_sel_idx = []
 		with tab4:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(72,85)
-		sel_idx = []
+		on_sel_idx = [75,76,77,78,79]
+		off_sel_idx = [81,82,83,84]
 		with tab5:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
-
+					st.write(data[i])
 if tab_idx == 2:
 	data = []
 	for line in file_wind:
@@ -235,43 +254,52 @@ if tab_idx == 2:
 									   'TurbSim full field'])
 
 		all_idx = range(3,10)
-		sel_idx = []
+		on_sel_idx = [4,5]
+		off_sel_idx = []
 		with tab1:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(11,14)
-		sel_idx = []
+		on_sel_idx = [11,12,13]
+		off_sel_idx = []
 		with tab2:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(15,18)
-		sel_idx = []
+		on_sel_idx = []
+		off_sel_idx = []
 		with tab3:
 			for i in all_idx:
-				if i in sel_idx:
-					if i>27:
-						annotated_text(annotation(data[i], "" ,PALETTE[1]+"66"))
-					else:
-						annotated_text((data[i], "" ,PALETTE[4]+"66"))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(19,20)
-		sel_idx = []
+		on_sel_idx = []
+		off_sel_idx = []
 		with tab4:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 if tab_idx == 3:
 	data = []
@@ -287,61 +315,81 @@ if tab_idx == 3:
 									   'Tower aeroyncamis'])
 
 		all_idx = range(3,14)
-		sel_idx = []
+		on_sel_idx = [5,6,7,8,9]
+		off_sel_idx = []
 		with tab1:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
+
 
 		all_idx = range(15,21)
-		sel_idx = []
+		on_sel_idx = [15]
+		off_sel_idx = []
 		with tab2:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(22,31)
-		sel_idx = []
+		on_sel_idx = [22,24,25]
+		off_sel_idx = []
 		with tab3:
 			for i in all_idx:
-				if i in sel_idx:
-					if i>27:
-						annotated_text(annotation(data[i], "" ,PALETTE[1]+"66"))
-					else:
-						annotated_text((data[i], "" ,PALETTE[4]+"66"))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
+
 
 		all_idx = range(40,51)
-		sel_idx = []
+		on_sel_idx = [40,46,47,48,49,50]
+		off_sel_idx = []
 		with tab4:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
+
 
 		all_idx = range(52,56)
-		sel_idx = []
+		on_sel_idx = [53,54,55]
+		off_sel_idx = []
 		with tab5:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
+
 
 		all_idx = range(57,62)
-		sel_idx = []
+		on_sel_idx = []
+		off_sel_idx = []
 		with tab6:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
+
 
 if tab_idx == 4:
 	data = []
@@ -354,31 +402,37 @@ if tab_idx == 4:
 								  'Simple variable-speed torque control'])
 
 		all_idx = range(6,17)
-		sel_idx = []
+		on_sel_idx = [6,7]
+		off_sel_idx = []
 		with tab1:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(18,26)
-		sel_idx = []
+		on_sel_idx = [18,19,20,24]
+		off_sel_idx = []
 		with tab2:
 			for i in all_idx:
-				if i in sel_idx:
-					annotated_text((data[i], "" ))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])
 
 		all_idx = range(27,31)
-		sel_idx = []
+		on_sel_idx = [27,28,29,30]
+		off_sel_idx = []
 		with tab3:
 			for i in all_idx:
-				if i in sel_idx:
-					if i>27:
-						annotated_text(annotation(data[i], "" ,PALETTE[1]+"66"))
-					else:
-						annotated_text((data[i], "" ,PALETTE[4]+"66"))
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 				else:
-					annotated_text(data[i])
+					st.write(data[i])

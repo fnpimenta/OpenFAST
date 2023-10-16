@@ -5,16 +5,14 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os 
 
-from annotated_text import annotated_text
 from OpenFAST import *
-
 from modes import *
 
 from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST Course - Task 2'
-icon = Image.open(".\logo.ico")
+icon = Image.open('logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon)
 
 st.title('Task 2 - Simulations with prescribed initial conditions')
@@ -60,6 +58,8 @@ PALETTE = [
 	"#808495",
 ]
 
+onshore_color = "#cc000033"
+offshore_color = "#0a75ad33"
 
 with st.expander("**Hints**",False):
 	st.write('''<div style="text-align: justify">
@@ -90,29 +90,45 @@ with st.expander("**Hints**",False):
 		tab1.write(data[i])
 		
 	all_idx = range(9,26)
-	sel_idx = [9,10,11,16,17,18,19]
+	on_sel_idx = [9,10,11,16,17,18,19]
+	off_sel_idx = []
 
 	with tab2:
 		for i in all_idx:
-			if i in sel_idx:
-				annotated_text((data[i], "" ))
+			if i in on_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+			elif i in off_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 			else:
-				annotated_text(data[i])
+				st.write(data[i])
+
 			
 		st.image(plat_dof)
 
 	all_idx = range(27,44)
-	sel_idx = [36]
+	on_sel_idx = [34,36]
+	off_sel_idx = []
 	with tab3:
 		for i in all_idx:
-			if i in sel_idx:
-				annotated_text((data[i], "" ))
+			if i in on_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+			elif i in off_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 			else:
-				annotated_text(data[i])
-
-	for i in range(45,71):
-		tab4.write(data[i])
-
+				st.write(data[i])
+	
+	all_idx = range(45,71)
+	on_sel_idx = [34,36]
+	off_sel_idx = []
+	with tab4:
+		for i in all_idx:
+			if i in on_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+			elif i in off_sel_idx:
+				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+			else:
+				st.write(data[i])
+				
 with st.expander("**Data analysis**",True):
 	st.write('Uploaded the output files from OpenFAST')
 	
