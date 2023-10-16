@@ -6,7 +6,7 @@ import matplotlib.gridspec as gridspec
 import os 
 
 from annotated_text import annotated_text
-
+from OpenFAST import *
 
 from modes import *
 
@@ -32,36 +32,19 @@ def load_data(uploaded_files,n1,n2):
 
 	return data 
 
+
 with st.expander("**Objective**",True):
-	st.write(r'''
-			After completing Task 1 you should have the tower and blades ElastoDyn input files ready to perform a first simulation. 
+	st.write('''<div style="text-align: justify">
+			\nAfter completing Task 1 you should have the tower and blades ElastoDyn input files ready to perform a first simulation. 
 			For this task, you will perform a **200s** free virabtion simulation of the WindPact wind turbine **imposing a 1m displacement at the tower top** in the FA direction. 
-			Compute and represent the power spectra from the simulated time series at a point at around 70% of the tower height considering the following scenarios:
+			Compute and represent the power spectra from the simulated time series at a point at around 70% of the tower height considering the following scenarios:</div>''',unsafe_allow_html=True)
+	st.write(r'''
 			1. Considering only the 1$^\text{st}$ FA tower DoF
 			2. Add the 2$^\text{nd}$  FA tower DoF
 			3. Add all the blades' DoF
-
+			
 			Estimate the structural natural frequenciy and damping coefficient for the tower 1$^\text{st}$ FA mode.
 		''')
-
-
-c1,c2,c3 = st.columns(3)
-
-# -- Load data files
-ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-ref_model = c1.selectbox('Reference model', ref_models, index=1,disabled=True)
-ref_path = ref_models[ref_model]
-
-all_dir = os.listdir('./OpenFAST_models/' + ref_path )
-sel_dir = c2.selectbox('Available modules', all_dir, index = 0 ,disabled=True)
-
-all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
-sel_file = c3.selectbox('Available files', all_files, index = 1,disabled=True)
-		
-log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
-data = []
-for line in log:
-	data.append(line)
 
 plat_dof = Image.open('figures/6DOF.png')
 
@@ -78,7 +61,30 @@ PALETTE = [
 ]
 
 
-with st.expander("**File explorer**",True):
+with st.expander("**Hints**",False):
+	st.write('''<div style="text-align: justify">
+			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
+			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted. 
+			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
+			</div>''',unsafe_allow_html=True)
+	c1,c2,c3 = st.columns(3)
+
+	# -- Load data files
+	ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
+	ref_model = c1.selectbox('Reference model', ref_models, index=1,disabled=True)
+	ref_path = ref_models[ref_model]
+
+	all_dir = os.listdir('./OpenFAST_models/' + ref_path )
+	sel_dir = c2.selectbox('Available modules', all_dir, index = 0 ,disabled=True)
+
+	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
+	sel_file = c3.selectbox('Available files', all_files, index = 1,disabled=True)
+			
+	log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
+	data = []
+	for line in log:
+		data.append(line)
+
 	tab1,tab2,tab3,tab4 = st.tabs(['Simulation Control','**Degrees of freedom**','**Initial conditions**','Turbine configuration'])
 	for i in range(3,6):
 		tab1.write(data[i])
@@ -116,17 +122,14 @@ with st.expander("**Data analysis**",True):
 	file.append(cols[0].file_uploader("1 FA mode only ",accept_multiple_files=False))
 	file.append(cols[1].file_uploader("2 FA modes",accept_multiple_files=False))
 	file.append(cols[2].file_uploader("All DoFs",accept_multiple_files=False))
-			
-
-	cols = st.columns(4)
-
-	n_modes = cols[0].number_input('Number of modes',2,None,3)
-	N = cols[1].number_input('Number of points',5,None,20)
-	mtop = cols[2].number_input('Rotor mass',0,None,0)
-	L= cols[3].number_input('Tower height',10,None,100)
+	
+	nfiles = np.zeros(len(file))-1
+	for i in range(len(file)):
+		if not(file[i]==None):
+			nfiles[i] = int(i)
 
 
-	if not file[0]==None:
+	if sum(nfiles>=0)>0:
 		file[0].seek(0)
 		data = pd.read_csv(file[0] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 		keys = data.columns
@@ -137,13 +140,70 @@ with st.expander("**Data analysis**",True):
 		tcol = cols[0].selectbox('Time column', data.columns,index=0)
 		dof = cols[1].selectbox('Data column', data.columns,index=1)
 
-		fig = plt.figure(figsize = (8,6))
-		gs = gridspec.GridSpec(2,1)
+		sep_plots = st.checkbox('Separate plots',value=True)
+		tabs = st.tabs(['Time series analysis','Modal analysis'])
+		
+		
+		with tabs[0]:
 
-		gs.update(hspace=0.1,wspace=0.1)
-		ax1 = plt.subplot(gs[0,0])
-		ax2 = plt.subplot(gs[1,0])
+			cols = st.columns([0.5,0.1,0.5])
 
-		ax1.plot(data[tcol],data[dof])
-	
-		st.pyplot(fig)
+#			tmin = cols[0].number_input('$t_{min}$',0.0,None,0.0)
+#			tmax = cols[1].number_input('$t_{max}$',0.0,None,float(data[tcol].iloc[-1]))
+			tmin,tmax = cols[0].slider('Time range',0.0,float(data[tcol].iloc[-1]),(0.0,float(data[tcol].iloc[-1])))
+
+#			fmin = cols[0].number_input('$f_{min}$',0.0,None,0.0)
+#			fmax = cols[1].number_input('$f_{max}$',0.0,None,float(0.5/(data[tcol][1]-data[tcol][0])))
+			fmin,fmax = cols[2].slider('Frequency range',0.0,float(0.5/(data[tcol][1]-data[tcol][0])),(0.0,float(0.25/(data[tcol][1]-data[tcol][0]))))
+			nfft = cols[2].number_input('FFT number of points',2**4,None,4096)
+			
+			if sep_plots:
+				fig = plt.figure(figsize = (12,10))
+
+				gs = gridspec.GridSpec(3,2)
+				gs.update(hspace=0.05,wspace=0.25)
+
+				for i in range(len(file)):			
+					ax1 = plt.subplot(gs[i,0])
+					ax2 = plt.subplot(gs[i,1])
+					if i>=0:
+						file[i].seek(0)
+						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+						
+						tfilter = (data[tcol]>=tmin) & (data[tcol]<=tmax)
+
+						f, Pxx = signal.welch(data[dof][tfilter], 1/(data[tcol][1]-data[tcol][0]) , nperseg=nfft , scaling='spectrum')
+
+						ax1.plot(data[tcol],data[dof])
+						ax2.semilogy(f,Pxx)
+
+						ax1.set_xlim(tmin,tmax)
+						ax2.set_xlim(fmin,fmax)
+
+						if i<(len(file)-1):
+							ax1.set_xticklabels('')
+							ax2.set_xticklabels('')
+			else:
+				fig = plt.figure(figsize = (12,4))
+
+				gs = gridspec.GridSpec(1,2)
+				gs.update(hspace=0.05,wspace=0.25)
+
+				ax1 = plt.subplot(gs[0,0])
+				ax2 = plt.subplot(gs[0,1])
+				for i in range(len(file)):			
+					if i>=0:
+						file[i].seek(0)
+						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+						
+						tfilter = (data[tcol]>=tmin) & (data[tcol]<=tmax)
+
+									
+						f, Pxx = signal.welch(data[dof][tfilter], 1/(data[tcol][1]-data[tcol][0]) , nperseg=nfft , scaling='spectrum')
+						
+						ax1.plot(data[tcol],data[dof])
+						ax2.semilogy(f,Pxx)
+
+						ax1.set_xlim(tmin,tmax)
+						ax2.set_xlim(fmin,fmax)
+			st.pyplot(fig  )

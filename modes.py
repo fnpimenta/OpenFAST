@@ -166,8 +166,7 @@ def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
                frameon=False,
                fontsize=12)
 
-    st.pyplot(fig)  
-    return 
+    return fig 
 
 def BladesModesPlot(h,mass,stiff_edge,stiff_wise,twist,N=2,n_plot=2,L=100,mtop=0):
     seg = np.linspace(0,1,N+1)*L
@@ -305,7 +304,7 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,twist,N=2,n_plot=2,L=100,mtop=0
 
     freq = np.sqrt(w)/(2*pi)
    
-    fig = plt.figure(figsize = (12,12))
+    fig = plt.figure(figsize = (18,18))
     gs = gridspec.GridSpec(5,4)
     gs.update(hspace=0.1,wspace=0.1)
     ax1 = plt.subplot(gs[0:-3,2:])
@@ -456,5 +455,4 @@ def BladesModesPlot(h,mass,stiff_edge,stiff_wise,twist,N=2,n_plot=2,L=100,mtop=0
                frameon=False,
                fontsize=14)
 
-    st.pyplot(fig)  
-    return 
+    return fig
