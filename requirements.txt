@@ -3,5 +3,4 @@ numpy==1.23.5
 scipy==1.8.1
 htbuilder
 streamlit
-annotated_text
 twine
