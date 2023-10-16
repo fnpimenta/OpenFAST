@@ -43,7 +43,7 @@ with st.expander("**Objective**",True):
 			Estimate the structural natural frequenciy and damping coefficient for the tower 1$^\text{st}$ FA mode.
 		''')
 
-plat_dof = Image.open('figures/6DOF.png')
+plat_dof = Image.open('figures/floating_dof.png')
 
 PALETTE = [
 	"#ff4b4b",
