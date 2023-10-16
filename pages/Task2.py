@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os 
 
-from OpenFAST import *
 from modes import *
 
 from PIL import Image
@@ -128,7 +127,7 @@ with st.expander("**Hints**",False):
 				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
 			else:
 				st.write(data[i])
-				
+
 with st.expander("**Data analysis**",True):
 	st.write('Uploaded the output files from OpenFAST')
 	
