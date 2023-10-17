@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os 
+from scipy import signal
 
 from modes import *
 
@@ -63,7 +64,7 @@ offshore_color = "#0a75ad33"
 with st.expander("**Hints**",False):
 	st.write('''<div style="text-align: justify">
 			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
-			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted. 
+			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted**. 
 			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
 			</div>''',unsafe_allow_html=True)
 	c1,c2,c3 = st.columns(3)
