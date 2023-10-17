@@ -172,8 +172,14 @@ with st.expander("**Data analysis**",True):
 #			fmin = cols[0].number_input('$f_{min}$',0.0,None,0.0)
 #			fmax = cols[1].number_input('$f_{max}$',0.0,None,float(0.5/(data[tcol][1]-data[tcol][0])))
 			fmin,fmax = cols[2].slider('Frequency range',0.0,float(0.5/(data[tcol][1]-data[tcol][0])),(0.0,float(0.25/(data[tcol][1]-data[tcol][0]))))
-			nfft = cols[2].number_input('FFT number of points',2**4,None,4096)
 			
+			tfilter = (data[tcol]>=tmin) & (data[tcol]<=tmax)
+
+			nmin = 6
+			nmax = int(np.log2(len(data[tfilter]))) + 1
+
+			nfft = cols[2].select_slider('FFT number of points',[int(2**x) for x in np.arange(nmin,nmax)],int(2**(nmax-3)))
+
 			if sep_plots:
 				fig = plt.figure(figsize = (12,10))
 
