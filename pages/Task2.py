@@ -183,7 +183,7 @@ with st.expander("**Data analysis**",True):
 				for i in range(len(file)):			
 					ax1 = plt.subplot(gs[i,0])
 					ax2 = plt.subplot(gs[i,1])
-					if i>=0:
+					if nfiles[i]>=0:
 						file[i].seek(0)
 						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 						
@@ -197,9 +197,9 @@ with st.expander("**Data analysis**",True):
 						ax1.set_xlim(tmin,tmax)
 						ax2.set_xlim(fmin,fmax)
 
-						if i<(len(file)-1):
-							ax1.set_xticklabels('')
-							ax2.set_xticklabels('')
+					if i<(len(file)-1):
+						ax1.set_xticklabels('')
+						ax2.set_xticklabels('')
 			else:
 				fig = plt.figure(figsize = (12,4))
 
@@ -209,7 +209,7 @@ with st.expander("**Data analysis**",True):
 				ax1 = plt.subplot(gs[0,0])
 				ax2 = plt.subplot(gs[0,1])
 				for i in range(len(file)):			
-					if i>=0:
+					if nfiles[i]>=0:
 						file[i].seek(0)
 						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 						
@@ -221,6 +221,6 @@ with st.expander("**Data analysis**",True):
 						ax1.plot(data[tcol],data[dof])
 						ax2.semilogy(f,Pxx)
 
-						ax1.set_xlim(tmin,tmax)
-						ax2.set_xlim(fmin,fmax)
+					ax1.set_xlim(tmin,tmax)
+					ax2.set_xlim(fmin,fmax)
 			st.pyplot(fig  )
