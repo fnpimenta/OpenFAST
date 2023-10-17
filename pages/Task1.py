@@ -11,10 +11,10 @@ from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST Course - Task 1'
-icon = Image.open('logo.ico')
+icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon )
 
-st.title('Task 1 - Compute the the modal configurations for the tower and the blades')
+st.title('Task 1 - Compute the modal configurations for the tower and the blades')
 
 with st.expander("**Objective**",True):
 	st.write(r'''

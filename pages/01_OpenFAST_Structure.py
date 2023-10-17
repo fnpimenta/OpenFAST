@@ -14,8 +14,8 @@ from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST API - Course tasks'
-icon = Image.open('logo.ico')
-st.set_page_config(page_title=apptitle, page_icon=icon,layout='wide')
+icon = Image.open('feup_logo.ico')
+st.set_page_config(page_title=apptitle, page_icon=icon)
 
 # Title the app
 st.title('OpenFAST analysis')
@@ -36,6 +36,9 @@ sel_mod = cols[0].selectbox('Available modules', all_mod)
 
 tab_idx = all_mod.index(sel_mod)
 
+onshore_color = "#bada5566"
+offshore_color = "#0a75ad33"
+
 cols = st.columns(2)
 cols[1].image(figs[tab_idx])
 
@@ -43,7 +46,10 @@ file_descriptions = ['''<div style="text-align: justify">
 					The OpenFAST main file indicates all the modules to be used. 
 					For each module a baseline file is required.
 					\nThe total duration of the simulation and the time step are also defined here.
-					</div>''']
+					\nHere, you may find the content of the different input files, 
+					<span style="background-color: %s">where lines highlighted in green</span> are typically relevant for any wind turbine model, 
+					while <span style="background-color: %s">lines highlighted in blue</span> are specific to offshore implementations.
+					</div>'''%(onshore_color,offshore_color)]
 
 file_descriptions.append('''<div style="text-align: justify">
 					\nThe **ElastoDyn** module governs all the aspects related to the structural behaviour of structure.
@@ -110,8 +116,6 @@ PALETTE = [	"#ff4b4b",
 			"#803df5",
 			"#808495",]
 
-onshore_color = "#bada5566"
-offshore_color = "#0a75ad33"
 if tab_idx == 0:
 	data = []
 	for line in file_OpenFAST:

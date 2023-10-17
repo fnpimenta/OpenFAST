@@ -12,7 +12,7 @@ from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST Course - Task 2'
-icon = Image.open('logo.ico')
+icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon)
 
 st.title('Task 2 - Simulations with prescribed initial conditions')

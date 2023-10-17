@@ -14,10 +14,10 @@ from PIL import Image
 
 # -- Set page config
 apptitle = 'OpenFAST Course'
-icon = Image.open("logo.ico")
-st.set_page_config(page_title=apptitle, page_icon=icon , layout="wide")
+icon = Image.open("feup_logo.ico")
+st.set_page_config(page_title=apptitle, page_icon=icon )
 
-cols = st.columns(4)
+cols = st.columns(3)
 
 #cols[0].markdown("[![Foo](https://sigarra.up.pt/feup/WEB_GESSI_DOCS.download_file?p_name=F-370784536/logo_cores_oficiais.jpg),](https://sigarra.up.pt/feup/pt/web_page.inicial)")
 #cols[2].markdown("[![Foo](https://paginas.fe.up.pt/~icfeup/wp-content/themes/ic-wai/img/vendor/instituto-da-construcao-logo.svg)](https://paginas.fe.up.pt/~icfeup)")
@@ -34,7 +34,9 @@ cols[2].markdown('''<a href="https://paginas.fe.up.pt/~icfeup">
                     ''',unsafe_allow_html=True)
 
 # Title the app
-st.title('Numerical modeling of wind turbines\n2nd Edition, October 2023')
+st.title('''Numerical modeling of wind turbines
+            \n2nd Edition, October 2023
+            \nFrancisco Pimenta, Filipe Magalhães''')
 
 
 tabs = st.tabs(['**Summary**' , '**Objectives**' , '**Methodology**'])
