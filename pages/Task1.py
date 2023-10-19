@@ -63,17 +63,16 @@ with st.expander("**File upload**",True):
 			uploaded_file.seek(0)
 		#tower = pd.read_csv(uploaded_file,skiprows=np.concatenate((np.arange(n1),[n1+1])),nrows=n2-n1-3,delimiter='\s+',on_bad_lines='skip',encoding_errors='ignore')
 
-
 	else:
 		# -- Load data files
 		ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
 		ref_model = c1.selectbox('Reference model', ref_models,index=1)
 		ref_path = ref_models[ref_model]
 
-		all_dir = os.listdir('./OpenFAST_models/' + ref_path )
+		all_dir = np.sort(os.listdir('./OpenFAST_models/' + ref_path ))
 		sel_dir = c1.selectbox('Available modules', all_dir)
 
-		all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
+		all_files = np.sort(os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir))
 		sel_file = c1.selectbox('Available files', all_files)
 
 		log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
