@@ -37,7 +37,7 @@ with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
 			\nAfter completing Task 1 you should have the tower and blades ElastoDyn input files ready to perform a first simulation.
-			For this task, you will perform a **200s** free virabtion simulation of the WindPact wind turbine **imposing a 1m displacement at the tower top** in the FA direction.
+			For this task, you will perform a **200s** free vibration simulation of the WindPact wind turbine **imposing a 1m displacement at the tower top** in the FA direction.
 			Compute and represent the power spectra from the simulated time series at a point at around 70% of the tower height considering the following scenarios:</div>''',unsafe_allow_html=True)
 	st.write(r'''
 			1. Considering only the 1$^\text{st}$ FA tower DoF
