@@ -3,3 +3,4 @@ numpy
 scipy
 fpdf
 pdf2image
+poppler-utils
