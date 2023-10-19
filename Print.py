@@ -5,8 +5,6 @@ import base64
 import numpy as np
 from tempfile import NamedTemporaryFile
 
-from sklearn.datasets import load_iris
-
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
@@ -90,45 +88,3 @@ def create_pdf_week1_2(figs,name,title,FileName,placeholder,placeholder_pdf,file
 
     # Displaying File
     placeholder_pdf.markdown(pdf_display, unsafe_allow_html=True)
-
-
-# df = load_iris(as_frame=True)["data"]
-
-# figs = []
-
-# for col in df.columns:
-#     fig, ax = plt.subplots()
-#     ax.plot(df[col])
-#     st.pyplot(fig)
-#     figs.append(fig)
-
-# def create_pdf(figs,logo1='figures/ICS.jpg',logo2='figures/FEUP.jpg'):
-#     pdf = FPDF()
-#     pdf.set_margins(25,18)
-#     pdf.add_page()
-#     pdf.set_font('Arial', 'B', 18)
-#     pdf.cell(45, 10, '',align='L',ln=0)
-#     pdf.cell(0, 10, 'Numerical modelling of wind turbines',align='L',ln=1)
-#     pdf.image(logo1,25,20,40)
-#     pdf.image(logo2,23,30,40)
-    
-#     pdf.set_font('Arial',  '',12)
-#     pdf.cell(45, 10, '',align='L',ln=0)
-#     pdf.cell(0, 10, 'test1',align='L',ln=1)
-#     pdf.cell(45, 10, '',align='L',ln=0)
-#     pdf.cell(0, 10,'Name:',align='L',ln=1)
-#     Count = 0
-#     for fig in figs:
-#         Count += 1
-#         with NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-#             fig.savefig(tmpfile.name)
-#             pdf.image(tmpfile.name,x=20,y=50*Count,w=0,h=60)
-#     html = create_download_link(pdf.output(dest="S").encode("latin-1"), 'test')
-#     st.markdown(html, unsafe_allow_html=True)
-
-# export_as_pdf = st.button("Export Report")
-
-
-# if export_as_pdf:
-#     create_pdf(figs[0:2])
-
