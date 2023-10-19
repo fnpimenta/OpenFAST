@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os 
+import scipy.integrate as integrate
 
 from modes import *
 from Print import * 
@@ -94,6 +95,12 @@ try:
 	tower = pd.read_csv(uploaded_file,skiprows=np.concatenate((np.arange(n1),[n1+1])),nrows=n2-n1-3,delimiter='\s+',on_bad_lines='skip',encoding_errors='ignore')
 	c2.write(tower)
 
+	if element_type == 'tower':
+		Mass = integrate.simpson(np.array(tower.iloc[:,1]),np.array(tower.iloc[:,0]))
+	else:
+		Mass = integrate.simpson(np.array(tower.iloc[:,3]),np.array(tower.iloc[:,0]))
+	c1.write(r'Total mass = %.2f $\times L$ (kg)'%Mass )
+
 	with st.expander("**Data analysis**",True):
 		cols = st.columns(4)
 
@@ -105,9 +112,9 @@ try:
 			L= cols[3].number_input('Tower height',10,None,100)
 
 			fig = TowerModesPlot(np.array(tower.iloc[:,0]),
-						   		np.array(tower.iloc[:,1]),
-						   		np.array(tower.iloc[:,2]),
-						   		N=N,n_plot=n_modes,L=L,mtop=mtop)
+						   		 np.array(tower.iloc[:,1]),
+						   		 np.array(tower.iloc[:,2]),
+						   		 N=N,n_plot=n_modes,L=L,mtop=mtop,kphi=2)
 		else:
 
 			n_modes = cols[0].number_input('Number of modes',2,None,3)

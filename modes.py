@@ -14,7 +14,7 @@ def ModeFit(h,a2,a3,a4,a5):
     a6 = (1-a2-a3-a4-a5)
     return a2*h**2 + a3*h**3 + a4*h**4 + a5*h**5 + a6*h**6
     
-def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
+def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0,kphi=1):
     seg = np.linspace(0,1,N+1)*L
 
     f_m = interp1d(h*L,mass)
@@ -138,16 +138,16 @@ def TowerModesPlot(h,mass,stiff,N=2,n_plot=2,L=100,mtop=0):
         mode = np.zeros(len(v)+1)
         mode[1:] = v[:,-i]
         popt, pcov = curve_fit(ModeFit, points/L , mode/mode[-1])
-        phi = ' %.2f$x^2$'%popt[0]
+        phi = ' %.2f$x^2$'%(kphi*popt[0])
         for j in range(3):
             if popt[j+1]>0:
-                phi += ' + %.2f$x^%d$'%(popt[j+1],j+3)
+                phi += ' + %.2f$x^%d$'%(kphi*popt[j+1],j+3)
             else:
-                phi += ' - %.2f$x^%d$'%(abs(popt[j+1]),j+3)
+                phi += ' - %.2f$x^%d$'%(kphi*abs(popt[j+1]),j+3)
         if (1-np.sum(popt))>0:
-            phi += ' + %.2f$x^%d$'%(1-np.sum(popt),6)
+            phi += ' + %.2f$x^%d$'%(kphi*(1-np.sum(popt)),6)
         else:
-            phi += ' - %.2f$x^%d$'%(abs(1-np.sum(popt)),6)
+            phi += ' - %.2f$x^%d$'%(kphi*abs(1-np.sum(popt)),6)
             
         ax3.plot(mode,points,'o',color=colors[i-1])
         

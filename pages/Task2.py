@@ -397,4 +397,7 @@ with exp:
 exp_c = exp.columns([0.25,0.25,0.5])
 export_as_pdf = exp_c[0].button("Generate Report")
 if export_as_pdf:
-	create_pdf_week1_2(figs,report_text,'Task 2: Free decay analysis','Task2_report',exp_c[1],exp,file_id+1)
+	try:
+		create_pdf_week1_2(figs,report_text,'Task 2: Free decay analysis','Task2_report',exp_c[1],exp,file_id+1)
+	except:
+		exp.error('Something went wrong. No file available for the analysis.', icon="⚠️")

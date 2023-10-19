@@ -2,4 +2,4 @@ matplotlib
 numpy
 scipy
 fpdf
-pdf2jpg
+pdf2image
