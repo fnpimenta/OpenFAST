@@ -39,7 +39,7 @@ with st.expander("**File upload**",True):
 	c1,c2 = st.columns([0.35,0.65])
 
 	# -- File type definition (tab1)
-	file_mode = ["📈 Select from database" , "📈 Upload file" ]
+	file_mode = ["📚 Select from database" , "⬆️ Upload file" ]
 	page = c1.selectbox('Input data file', file_mode)
 
 	if page == file_mode[1]:
@@ -96,23 +96,30 @@ try:
 	with st.expander("**Data analysis**",True):
 		cols = st.columns(4)
 
-		n_modes = cols[0].number_input('Number of modes',2,None,3)
-		N = cols[1].number_input('Number of points',5,None,20)
-		mtop = cols[2].number_input('Rotor mass',0,None,0)
-		L= cols[3].number_input('Tower height',10,None,100)
-
 		if element_type == 'tower':
+			
+			n_modes = cols[0].number_input('Number of modes',2,None,3)
+			N = cols[1].number_input('Number of points',5,None,20)
+			mtop = cols[2].number_input('Rotor mass',0,None,0)
+			L= cols[3].number_input('Tower height',10,None,100)
+
 			fig = TowerModesPlot(np.array(tower.iloc[:,0]),
 						   np.array(tower.iloc[:,1]),
 						   np.array(tower.iloc[:,2]),
 						   N=N,n_plot=n_modes,L=L,mtop=mtop)
 		else:
+
+			n_modes = cols[0].number_input('Number of modes',2,None,3)
+			N = cols[1].number_input('Number of points',5,None,20)
+			mtop = cols[2].number_input('Tip mass',0,None,0)
+			L= cols[3].number_input('Blade length',10,None,100)
+
 			fig = BladesModesPlot(np.array(tower.iloc[:,0]),
-							np.array(tower.iloc[:,3]),
-							np.array(tower.iloc[:,4]),
-							np.array(tower.iloc[:,5]),
-							np.array(tower.iloc[:,2]),
-							N=N,n_plot=n_modes,L=L,mtop=mtop)
+								  np.array(tower.iloc[:,3]),
+								  np.array(tower.iloc[:,4]),
+								  np.array(tower.iloc[:,5]),
+								  np.array(tower.iloc[:,2]),
+								  N=N,n_plot=n_modes,L=L,mtop=mtop)
 		st.pyplot(fig)
 except:
 	c2.warning('Please select or upload an adequate file with the blades or tower distributed properties.', icon="⚠️")
