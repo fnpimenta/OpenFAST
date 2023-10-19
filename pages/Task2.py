@@ -267,30 +267,6 @@ with st.expander("**Data analysis**",True):
 					sos = signal.butter(filt_order  , fmin, 'highpass' , fs=fs , output='sos', analog=False)
 
 				elif filt_type == 'Band-pass':
-<<<<<<< HEAD
-					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=1-filt_app)  # min, max, default
-					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
-					sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
-				if filt_app == 0:
-					sos = 0
-
-
-				cols = st.columns(2)
-				peaks_types = {
-							 "Positive peaks only": 0,
-							 "All peaks": 1,
-							}
-
-				peaks_type = cols[0].radio('Peaks to use', peaks_types.keys(),horizontal=True)
-
-				fit_types = {
-							 "Trend line": 0,
-							 "Mean value": 1,
-							}
-
-				fit_type = cols[1].radio('Fit type', fit_types.keys(),horizontal=True,index=0)
-
-=======
 					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=(filt_type=='No filter'))  # min, max, default
 					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
 					sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
@@ -301,16 +277,13 @@ with st.expander("**Data analysis**",True):
 
 				cols = st.columns(2)
 
->>>>>>> dev
 				if nfiles[file_id]>=0:
 
 					file[file_id].seek(0)
 					data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-<<<<<<< HEAD
-					if filt_app == 1:
-=======
+
 					if not(filt_type=='No filter'):
->>>>>>> dev
+
 						y = np.array(data[dof])
 						t = np.array(data[tcol])
 						y_doubled = np.zeros(2*len(y)-1)
@@ -417,8 +390,7 @@ exp = st.expander('**Export report**',False)
 with exp:
 	report_text = st.text_input("Name")
 	st.write('''<div style="text-align: justify">
-		\nNote that the modes should be properly normalised to be used as input for OpenFAST.
-		From the identified mode shapes, please indicate the scaling factor you should apply to each mode:
+		\nNote that you may need to reduce the time range for the modal analysis or filter the data to obtain better results.
 		</div>''',unsafe_allow_html=True)
 
 
