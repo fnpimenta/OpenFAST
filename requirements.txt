@@ -4,3 +4,4 @@ scipy
 fpdf
 pdf2image
 poppler
+poppler-utils
