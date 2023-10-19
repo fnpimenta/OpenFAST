@@ -41,10 +41,10 @@ with st.expander("**Objective**",True):
 	st.write(r'''
 			1. Considering only the 1$^\text{st}$ FA tower DoF
 			2. Add the 2$^\text{nd}$  FA tower DoF
-			3. Add all the blades' DoF
-			
-			Estimate the structural natural frequency and damping coefficient for the tower 1$^\text{st}$ FA mode.
-		''')
+			3. Add all the blades' DoF''')
+	st.write('''<div style="text-align: justify">
+			\nUsing any of the simulations above, estimate the structural natural frequency and damping coefficient for the tower 1$^{st}$ FA mode.
+			\nIf you have time, you may repeat the analysis with the AeroDyn module enabled and different pitch angles.</div>''',unsafe_allow_html=True)
 
 plat_dof = Image.open('figures/floating_dof.png')
 
@@ -105,7 +105,6 @@ with st.expander("**Hints**",False):
 			else:
 				st.write(data[i])
 
-			
 		st.image(plat_dof)
 
 	all_idx = range(27,44)
@@ -151,6 +150,10 @@ with st.expander("**Data analysis**",True):
 	if sum(nfiles>=0)>0:
 		file[0].seek(0)
 		data = pd.read_csv(file[0] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+		file[0].seek(0)
+		units = pd.read_csv(file[0], skiprows=[0,1,2,3,4,5] , nrows=1,delimiter=r"\s+")
+		
+		
 		keys = data.columns
 		nvar = len(keys)
 
@@ -159,24 +162,22 @@ with st.expander("**Data analysis**",True):
 		tcol = cols[0].selectbox('Time column', data.columns,index=0)
 		dof = cols[1].selectbox('Data column', data.columns,index=1)
 
-		sep_plots = st.checkbox('Separate plots',value=True)
+		t_min,t_max = cols[0].slider('Time range',0.0,float(data[tcol].iloc[-1]),(0.0,float(data[tcol].iloc[-1])))
+		f_min,f_max = cols[1].slider('Frequency range',0.0,float(0.5/(data[tcol][1]-data[tcol][0])),(0.0,float(0.25/(data[tcol][1]-data[tcol][0]))))
+
+		tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
+
+		nmin = 4
+		nmax = np.max((int(np.log2(len(data[tfilter]))) + 1,8))
+	
+		nfft = cols[1].select_slider('FFT number of points',[int(2**x) for x in np.arange(nmin,nmax)],int(2**(nmax-3)))
+
+		sep_plots = cols[0].checkbox('Separate plots',value=False)
 		tabs = st.tabs(['Time series analysis','Modal analysis'])
 		
 		fs = 1/np.array(data[tcol][1]-data[tcol][0])
 
 		with tabs[0]:
-
-			cols = st.columns([0.5,0.1,0.5])
-
-			t_min,t_max = cols[0].slider('Time range',0.0,float(data[tcol].iloc[-1]),(0.0,float(data[tcol].iloc[-1])))
-			f_min,f_max = cols[2].slider('Frequency range',0.0,float(0.5/(data[tcol][1]-data[tcol][0])),(0.0,float(0.25/(data[tcol][1]-data[tcol][0]))))
-			
-			tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
-
-			nmin = 4
-			nmax = np.max((int(np.log2(len(data[tfilter]))) + 1,8))
-	
-			nfft = cols[2].select_slider('FFT number of points',[int(2**x) for x in np.arange(nmin,nmax)],int(2**(nmax-3)))
 
 			if sep_plots:
 				fig = plt.figure(figsize = (12,10))
@@ -201,9 +202,15 @@ with st.expander("**Data analysis**",True):
 						ax1.set_xlim(t_min,t_max)
 						ax2.set_xlim(f_min,f_max)
 
+						ax1.set_ylabel('%s %s'%(dof,units[dof].iloc[0]))
+						ax2.set_ylabel('PSD')
+
 					if i<(len(file)-1):
 						ax1.set_xticklabels('')
 						ax2.set_xticklabels('')
+
+				ax1.set_xlabel('Time (s)')
+				ax2.set_xlabel('Frequency (Hz)')
 			else:
 				fig = plt.figure(figsize = (12,4))
 
@@ -227,51 +234,66 @@ with st.expander("**Data analysis**",True):
 
 					ax1.set_xlim(t_min,t_max)
 					ax2.set_xlim(f_min,f_max)
+
+					ax1.set_xlabel('Time (s)')
+					ax2.set_xlabel('Frequency (Hz)')
+
+					ax1.set_ylabel('%s %s'%(dof,units[dof].iloc[0]))
+					ax2.set_ylabel('PSD')
+
 			st.pyplot(fig)
 
 
 		with tabs[1]:
-			peaks_types = {
-						 "Positive peaks only": 0,
-						 "All peaks": 1,
-						}
 
-			peaks_type = st.radio('Peaks to use', peaks_types.keys(),horizontal=True)
-			filt_app = st.checkbox('Apply filter') 
-			fit_types = {
-						 "Trend line": 0,
-						 "Mean value": 1,
-						}
+			file_id = int(st.selectbox('File for the analysis',range(1,1+len(file))) - 1)
+			
+			make_analysis = st.checkbox('Run analysis')
 
-			fit_type = st.radio('Fit type', fit_types.keys(),horizontal=True,index=0)
+			if make_analysis: 
+				filt_app = st.checkbox('Apply filter') 
 
-			if filt_app == 1:
-				filt_type = st.selectbox('Filter type', ['Low-pass','High-pass','Band-pass'],index=0)
-				filt_order = st.slider('Filter order',4,12,8)
-				col1_t2, col2_t2 = st.columns(2)
-				
+				cols = st.columns(4)		
+				filt_type = cols[0].selectbox('Filter type', ['Low-pass','High-pass','Band-pass'],index=0,disabled=1-filt_app)
+				filt_order = cols[1].slider('Filter order',4,12,8,disabled=1-filt_app)
+					
 				if filt_type == 'Low-pass':
-					fmin = col1_t2.number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
-					fmax = col2_t2.number_input('Upper limit of the filter', min_value=0.0, max_value=f_max, value=float(f_max/4))  # min, max, default
+					fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', min_value=0.0, max_value=f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
 					sos = signal.butter(filt_order  , fmax, 'lowpass' , fs=fs , output='sos', analog=False)
 
 				elif filt_type == 'High-pass':
-					fmin = col1_t2.number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/4))  # min, max, default
-					fmax = col2_t2.number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
+					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
 					sos = signal.butter(filt_order  , fmin, 'highpass' , fs=fs , output='sos', analog=False)
 
 				elif filt_type == 'Band-pass':
-					fmin = col1_t2.number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8))  # min, max, default
-					fmax = col2_t2.number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4))  # min, max, default
+					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=1-filt_app)  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
 					sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
-			else:
-				sos = 0
+				if filt_app == 0:
+					sos = 0
 
 
-			if sep_plots:
-				for i in range(len(file)):		
-					file[i].seek(0)
-					data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+				cols = st.columns(2)
+				peaks_types = {
+							 "Positive peaks only": 0,
+							 "All peaks": 1,
+							}
+
+				peaks_type = cols[0].radio('Peaks to use', peaks_types.keys(),horizontal=True)
+				
+				fit_types = {
+							 "Trend line": 0,
+							 "Mean value": 1,
+							}
+
+				fit_type = cols[1].radio('Fit type', fit_types.keys(),horizontal=True,index=0)
+			
+				if nfiles[file_id]>=0:
+					
+					file[file_id].seek(0)
+					data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 					if filt_app == 1:
 						y = np.array(data[dof])
 						t = np.array(data[tcol])
@@ -286,7 +308,7 @@ with st.expander("**Data analysis**",True):
 					else:
 						y_filt = y = np.array(data[dof])
 						t = np.array(data[tcol])
-
+					
 					# Define the time series limits for analysis
 					time_filter = (t>=t_min) & (t<=t_max)
 
@@ -295,8 +317,8 @@ with st.expander("**Data analysis**",True):
 					y_zerod = y_filt - offset
 
 					# Estimate the peaks of the zeroed time series
-					peaks_time, peaks_amp = peaks_estimator(t,y_zerod[time_filter],peaks_types[peaks_type],t_min==0)
-
+					peaks_time, peaks_amp = peaks_estimator(t[time_filter],y_zerod[time_filter],peaks_types[peaks_type],0)
+					
 					# Estiamte of the dynamic properties of the free decay
 					xi_est, f_est = dynamic_estimator(peaks_time,peaks_amp,peaks_type=peaks_types[peaks_type])
 
@@ -306,7 +328,7 @@ with st.expander("**Data analysis**",True):
 
 
 					# Create the figure to plot
-					fig = free_decay_plot(t,y,y_filt,offset,
+					fig_decay = free_decay_plot(t,y,y_filt,offset,
 										  peaks_time,peaks_amp,
 										  xi_est,f_est,
 										  f,Pxx, Pxx_filt,
@@ -314,4 +336,58 @@ with st.expander("**Data analysis**",True):
 										  time_filter,
 										  fit_types[fit_type])
 
-					st.pyplot(fig)
+					st.pyplot(fig_decay)
+
+				else:
+					st.warning('The selected file has not been uploaded properly.', icon="⚠️")
+
+
+with st.expander('**See explanation**',False):
+	st.write(r'''
+		The free equation of motion (without any external load) for a single degree of freedom system is given by:
+		$$
+			m\ddot{x}(t) = -kx(t) - f_d(t)
+		$$
+		where $f_d(t)$ is the damping force, here taken to be a generic function of time. 
+		In the simplified numerical simulation above, the damping force is assumed to be such that:
+		$$
+		   f_d(t) = c_1x(t) + c_2|\dot{x}(t)-u_r|(\dot{x}(t)-u_r)
+		$$
+		where $u_r$ is external flow velocity. 
+
+		For the linear damping model ($c_2=0$), the differential equation above has the well known solution:
+		$$
+			x(t) = Ae^{-\xi\omega_0 t}\cos(w\sqrt{1-\xi^2}t+\phi) = Ae^{-\xi\omega_0 t}\cos(w_dt+\phi)
+		$$
+		where $\omega_0=\sqrt{\frac{k}{m}}$ is the system undamped natural frequency and $\xi$ is the damping ratio, 
+		defined as the ratio between the damping coefficient and its critical value as:
+		$$
+			\xi=\frac{c_1}{c_{cr}}=\frac{c_1}{2m\omega_0}
+		$$
+		One may immediately see that the response is given by a periodic function modulated by a negative exponential,
+		implying that $\xi$ can be evaluated through the response amplitude, since:
+		$$
+			\ln(Ae^{-\xi\omega_0 t}) = \ln(A) - \xi\omega_0t
+		$$
+		meaning that the envelope amplitde natural logarithm, here obtained through the peak value in every oscillation, is a linear function of time with slope $-\xi\omega_0$.
+
+		Although this is no longer true if $c_2\neq0$, for low damping forces, one may still make some general considerations based on energy dissipation.
+		Firslty, it should be noted that the energy dissipation over a full cyle may be written as:
+		$$
+			W = \int_Tf_d(t)dx
+		$$
+		For the linear damping contribution, one finds:
+		$$
+			W_l = c_1\int_T\dot{x}(t)dx = c_1\int_T\dot{x}^2dt \approx  c_1A^2\omega_0^2\int_T\sin^2(\omega_0 t)dt = c_1\left(A^2\omega_0\pi\right)
+		$$
+		where it was assumed that to first order the motion may be approximated over a cycle as $x(t)=A\cos(\omega_0t)$.
+		Under the same assumption, the quadratic contribution, for $u_r=0$, may be obtained as:
+		$$
+			W_q = c_2\int_T|\dot{x}(t)|\dot{x}(t)dx = 2c_2\int_{T/2}\dot{x}^3dt \approx 2c_2A^3\omega_0^3\int_{T/2}\sin^3(\omega_0t)dt = c_2 \frac{8A^3\omega_0^2}{3}
+		$$
+		By comparison with the linear damping result, it follows that the linear coefficient that best approximates the quadratic response in terms of energy dissipation is:
+		$$
+			 \tilde{c} = c_2 \frac{8\omega_0}{3\pi} A 
+		$$
+		From the expression above, it can be seen that for a purely quadratic damping force, a linear dependency on the motion amplitude is expected.
+	''')
