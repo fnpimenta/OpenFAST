@@ -4,7 +4,7 @@ from fpdf import *
 import base64
 import numpy as np
 from tempfile import NamedTemporaryFile
-import pdf2image
+from pdf2jpg import pdf2jpg
 
 def create_download_link(val, filename):
 	b64 = base64.b64encode(val)  # val looks like b'...'
@@ -51,8 +51,30 @@ def create_pdf_week1(figs,name,title,FileName,placeholder,placeholder_pdf,s1,s2,
 	# Displaying File
 	#placeholder_pdf.markdown(pdf_display, unsafe_allow_html=True)
 
-	image = pdf2image.convert_from_bytes(pdf.output(dest="S").encode("latin-1"))
-	placeholder_pdf.image(image, use_column_width=True,caption='File preview')
+	#image = pdf2image.convert_from_bytes(pdf.output(dest="S").encode("latin-1"))
+	#placeholder_pdf.image(image, use_column_width=True,caption='File preview')
+
+	# Create temporary folder for generated image
+	tmp_sub_folder_path = create_tmp_sub_folder()
+
+	# Save images in that sub-folder
+	result = pdf2jpg.convert_pdf2jpg(pdf.output(dest="S").encode("latin-1"), pages="ALL")[0]["output_jpgfiles"]
+	images = []
+	for image_path in result[0]["output_jpgfiles"]:
+		images.append(np.array(Image.open(image_path)))
+
+	# Create merged image from all images + remove irrelevant whitespace
+	merged_arr = np.concatenate(images)
+	merged_arr = crop_white_space(merged_arr)
+	merged_path = os.path.join(tmp_sub_folder_path, "merged.jpeg")
+	Image.fromarray(merged_arr).save(merged_path)
+
+	# Display the image
+	st.image(merged_path)
+	try_remove(tmp_sub_folder_path)
+
+
+
 
 	return
 
