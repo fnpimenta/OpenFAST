@@ -8,7 +8,6 @@ from tempfile import NamedTemporaryFile
 from sklearn.datasets import load_iris
 
 
-
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
@@ -25,7 +24,6 @@ for col in df.columns:
 
 export_as_pdf = st.button("Export Report")
 report_text = st.text_input("Report Text")
-
 
 if export_as_pdf:
     pdf = FPDF()
