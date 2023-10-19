@@ -9,6 +9,7 @@ from scipy import signal
 from modes import *
 from estimators import *
 from plot_generators import *
+from Print import * 
 
 from PIL import Image
 
@@ -32,8 +33,8 @@ def load_data(uploaded_files,n1,n2):
 
 	return data 
 
-
 with st.expander("**Objective**",True):
+	
 	st.write('''<div style="text-align: justify">
 			\nAfter completing Task 1 you should have the tower and blades ElastoDyn input files ready to perform a first simulation. 
 			For this task, you will perform a **200s** free virabtion simulation of the WindPact wind turbine **imposing a 1m displacement at the tower top** in the FA direction. 
@@ -42,11 +43,14 @@ with st.expander("**Objective**",True):
 			1. Considering only the 1$^\text{st}$ FA tower DoF
 			2. Add the 2$^\text{nd}$  FA tower DoF
 			3. Add all the blades' DoF''')
+	st.write(''' ''',unsafe_allow_html=True)
 	st.write('''<div style="text-align: justify">
 			\nUsing any of the simulations above, estimate the structural natural frequency and damping coefficient for the tower 1$^{st}$ FA mode.
-			\nIf you have time, you may repeat the analysis with the AeroDyn module enabled and different pitch angles.</div>''',unsafe_allow_html=True)
+			\nIf you have time, you may repeat the analysis with the AeroDyn module enabled and different pitch angles.
+			\n Once you have finished, you may download a report of the analysis.
+			</div>''',unsafe_allow_html=True)
 
-plat_dof = Image.open('figures/floating_dof.png')
+figs = []
 
 PALETTE = [
 	"#ff4b4b",
@@ -67,6 +71,7 @@ with st.expander("**Hints**",False):
 	st.write('''<div style="text-align: justify">
 			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
 			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted**. 
+			\nDo not forget to modify the **simulation length** and select **only the ElastoDyn module in the OpenFAST input file**.
 			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
 			</div>''',unsafe_allow_html=True)
 	c1,c2,c3 = st.columns(3)
@@ -105,11 +110,10 @@ with st.expander("**Hints**",False):
 			else:
 				st.write(data[i])
 
-		st.image(plat_dof)
-
 	all_idx = range(27,44)
-	on_sel_idx = [34,36]
+	on_sel_idx = [29,30,31,34,36]
 	off_sel_idx = []
+
 	with tab3:
 		for i in all_idx:
 			if i in on_sel_idx:
@@ -172,110 +176,67 @@ with st.expander("**Data analysis**",True):
 	
 		nfft = cols[1].select_slider('FFT number of points',[int(2**x) for x in np.arange(nmin,nmax)],int(2**(nmax-3)))
 
-		sep_plots = cols[0].checkbox('Separate plots',value=False)
 		tabs = st.tabs(['Time series analysis','Modal analysis'])
 		
 		fs = 1/np.array(data[tcol][1]-data[tcol][0])
 
 		with tabs[0]:
 
-			if sep_plots:
-				fig = plt.figure(figsize = (12,10))
+			fig = plt.figure(figsize = (12,4))
 
-				gs = gridspec.GridSpec(3,2)
-				gs.update(hspace=0.05,wspace=0.25)
+			gs = gridspec.GridSpec(1,2)
+			gs.update(hspace=0.05,wspace=0.25)
 
-				for i in range(len(file)):			
-					ax1 = plt.subplot(gs[i,0])
-					ax2 = plt.subplot(gs[i,1])
-					if nfiles[i]>=0:
-						file[i].seek(0)
-						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-						
-						tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
+			ax1 = plt.subplot(gs[0,0])
+			ax2 = plt.subplot(gs[0,1])
+			for i in range(len(file)):			
+				if nfiles[i]>=0:
+					file[i].seek(0)
+					data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+					
+					tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
 
-						f, Pxx = signal.welch(data[dof][tfilter], 1/(data[tcol][1]-data[tcol][0]) , nperseg=nfft , scaling='spectrum')
+								
+					f, Pxx = signal.welch(data[dof][tfilter], 1/(data[tcol][1]-data[tcol][0]) , nperseg=nfft , scaling='spectrum')
+					
+					ax1.plot(data[tcol],data[dof],label='Simulation %d'%(i+1))
+					ax2.semilogy(f,Pxx)
 
-						ax1.plot(data[tcol],data[dof])
-						ax2.semilogy(f,Pxx)
-
-						ax1.set_xlim(t_min,t_max)
-						ax2.set_xlim(f_min,f_max)
-
-						ax1.set_ylabel('%s %s'%(dof,units[dof].iloc[0]))
-						ax2.set_ylabel('PSD')
-
-					if i<(len(file)-1):
-						ax1.set_xticklabels('')
-						ax2.set_xticklabels('')
+				ax1.set_xlim(t_min,t_max)
+				ax2.set_xlim(f_min,f_max)
 
 				ax1.set_xlabel('Time (s)')
 				ax2.set_xlabel('Frequency (Hz)')
-			else:
-				fig = plt.figure(figsize = (12,4))
 
-				gs = gridspec.GridSpec(1,2)
-				gs.update(hspace=0.05,wspace=0.25)
+				ax1.set_ylabel('%s %s'%(dof,units[dof].iloc[0]))
+				ax2.set_ylabel('PSD')
+				
+			ax1.set_title('Time domain')
+			ax2.set_title('Frequency domain')
+			leg = ax1.legend(loc='upper center',
+				 			bbox_to_anchor=(1.1,-0.2),
+							ncol=3,
+							fancybox=False,
+							framealpha=1,
+							frameon=False)
 
-				ax1 = plt.subplot(gs[0,0])
-				ax2 = plt.subplot(gs[0,1])
-				for i in range(len(file)):			
-					if nfiles[i]>=0:
-						file[i].seek(0)
-						data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-						
-						tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
 
-									
-						f, Pxx = signal.welch(data[dof][tfilter], 1/(data[tcol][1]-data[tcol][0]) , nperseg=nfft , scaling='spectrum')
-						
-						ax1.plot(data[tcol],data[dof])
-						ax2.semilogy(f,Pxx)
-
-					ax1.set_xlim(t_min,t_max)
-					ax2.set_xlim(f_min,f_max)
-
-					ax1.set_xlabel('Time (s)')
-					ax2.set_xlabel('Frequency (Hz)')
-
-					ax1.set_ylabel('%s %s'%(dof,units[dof].iloc[0]))
-					ax2.set_ylabel('PSD')
-
+			figs.append(fig)
 			st.pyplot(fig)
 
-
 		with tabs[1]:
+			cols = st.columns(4)
 
-			file_id = int(st.selectbox('File for the analysis',range(1,1+len(file))) - 1)
+			file_id = int(cols[0].selectbox('File for the analysis',range(1,1+len(file))) - 1)
+			#trange = cols[1].slider('Time range for the analysis',t_min,t_max,t_max)
 			
-			make_analysis = st.checkbox('Run analysis')
 
+			#make_analysis = st.checkbox('Run analysis')
+			make_analysis = 1
+
+			cols = st.columns(2)
 			if make_analysis: 
-				filt_app = st.checkbox('Apply filter') 
 
-				cols = st.columns(4)		
-				filt_type = cols[0].selectbox('Filter type', ['Low-pass','High-pass','Band-pass'],index=0,disabled=1-filt_app)
-				filt_order = cols[1].slider('Filter order',4,12,8,disabled=1-filt_app)
-					
-				if filt_type == 'Low-pass':
-					fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
-					fmax = cols[3].number_input('Upper limit of the filter', min_value=0.0, max_value=f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
-					sos = signal.butter(filt_order  , fmax, 'lowpass' , fs=fs , output='sos', analog=False)
-
-				elif filt_type == 'High-pass':
-					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
-					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
-					sos = signal.butter(filt_order  , fmin, 'highpass' , fs=fs , output='sos', analog=False)
-
-				elif filt_type == 'Band-pass':
-					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=1-filt_app)  # min, max, default
-					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=1-filt_app)  # min, max, default
-					sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
-				if filt_app == 0:
-					sos = 0
-
-
-				cols = st.columns(2)
 				peaks_types = {
 							 "Positive peaks only": 0,
 							 "All peaks": 1,
@@ -289,12 +250,38 @@ with st.expander("**Data analysis**",True):
 							}
 
 				fit_type = cols[1].radio('Fit type', fit_types.keys(),horizontal=True,index=0)
-			
+
+				cols = st.columns(4)		
+				filt_type = cols[0].selectbox('Filter type', ['No filter','Low-pass','High-pass','Band-pass'],index=0)
+
+				filt_order = cols[1].slider('Filter order',4,12,8,disabled=(filt_type=='No filter'))
+				
+				if filt_type == 'Low-pass':
+					fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', min_value=0.0, max_value=f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
+					sos = signal.butter(filt_order  , fmax, 'lowpass' , fs=fs , output='sos', analog=False)
+
+				elif filt_type == 'High-pass':
+					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
+					sos = signal.butter(filt_order  , fmin, 'highpass' , fs=fs , output='sos', analog=False)
+
+				elif filt_type == 'Band-pass':
+					fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=(filt_type=='No filter'))  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
+					sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
+				else:
+					fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
+					fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
+					sos = 0
+
+				cols = st.columns(2)
+
 				if nfiles[file_id]>=0:
 					
 					file[file_id].seek(0)
 					data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-					if filt_app == 1:
+					if not(filt_type=='No filter'):
 						y = np.array(data[dof])
 						t = np.array(data[tcol])
 						y_doubled = np.zeros(2*len(y)-1)
@@ -332,11 +319,13 @@ with st.expander("**Data analysis**",True):
 										  peaks_time,peaks_amp,
 										  xi_est,f_est,
 										  f,Pxx, Pxx_filt,
-										  fs,sos,f_max,filt_app,
+										  fs,sos,f_max,not(filt_type=='No filter')*1,
 										  time_filter,
 										  fit_types[fit_type])
 
+					figs.append(fig_decay)
 					st.pyplot(fig_decay)
+
 
 				else:
 					st.warning('The selected file has not been uploaded properly.', icon="⚠️")
@@ -391,3 +380,20 @@ with st.expander('**See explanation**',False):
 		$$
 		From the expression above, it can be seen that for a purely quadratic damping force, a linear dependency on the motion amplitude is expected.
 	''')
+
+
+
+exp = st.expander('**Export report**',False)
+
+with exp:
+	report_text = st.text_input("Name")
+	st.write('''<div style="text-align: justify">
+		\nNote that the modes should be properly normalised to be used as input for OpenFAST. 
+		From the identified mode shapes, please indicate the scaling factor you should apply to each mode:
+		</div>''',unsafe_allow_html=True)
+
+
+exp_c = exp.columns([0.25,0.25,0.5])
+export_as_pdf = exp_c[0].button("Generate Report")
+if export_as_pdf:
+	create_pdf_week1_2(figs,report_text,'Task 2: Free decay analysis','Task2_report',exp_c[1],exp,file_id+1)

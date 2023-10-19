@@ -6,6 +6,7 @@ import matplotlib.gridspec as gridspec
 import os 
 
 from modes import *
+from Print import * 
 
 from PIL import Image
 
@@ -51,7 +52,7 @@ with st.expander("**File upload**",True):
 				count += 1
 				if bytes("DISTRIBUTED", 'utf-8') in line:
 					n1 = count
-					if "TOWER" in line:
+					if bytes("TOWER",'utf-8') in line:
 						element_type = 'tower'
 					else:
 						element_type = 'blade'
@@ -65,7 +66,7 @@ with st.expander("**File upload**",True):
 	else:
 		# -- Load data files
 		ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-		ref_model = c1.selectbox('Reference model', ref_models)
+		ref_model = c1.selectbox('Reference model', ref_models,index=1)
 		ref_path = ref_models[ref_model]
 
 		all_dir = os.listdir('./OpenFAST_models/' + ref_path )
@@ -104,9 +105,9 @@ try:
 			L= cols[3].number_input('Tower height',10,None,100)
 
 			fig = TowerModesPlot(np.array(tower.iloc[:,0]),
-						   np.array(tower.iloc[:,1]),
-						   np.array(tower.iloc[:,2]),
-						   N=N,n_plot=n_modes,L=L,mtop=mtop)
+						   		np.array(tower.iloc[:,1]),
+						   		np.array(tower.iloc[:,2]),
+						   		N=N,n_plot=n_modes,L=L,mtop=mtop)
 		else:
 
 			n_modes = cols[0].number_input('Number of modes',2,None,3)
@@ -123,3 +124,24 @@ try:
 		st.pyplot(fig)
 except:
 	c2.warning('Please select or upload an adequate file with the blades or tower distributed properties.', icon="⚠️")
+
+exp = st.expander('**Export report**',False)
+
+with exp:
+	report_text = st.text_input("Name")
+	st.write('''<div style="text-align: justify">
+		\nNote that the modes should be properly normalised to be used as input for OpenFAST. 
+		From the identified mode shapes, please indicate the scaling factor you should apply to each mode:
+		</div>''',unsafe_allow_html=True)
+
+	cols = st.columns(2)
+
+	s1 = cols[0].number_input("Scaling factor for the 1$^{st}$ mode")
+	s2 = cols[1].number_input("Scaling factor for the 2$^{nd}$ mode")
+	
+
+exp_c = exp.columns([0.25,0.25,0.5])
+export_as_pdf = exp_c[0].button("Generate Report")
+
+if export_as_pdf:
+    create_pdf_week1([fig],report_text,'Task 1: Modal configurations','Task1_report',exp_c[1],exp,s1,s2)
