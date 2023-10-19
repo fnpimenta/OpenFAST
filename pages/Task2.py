@@ -46,6 +46,7 @@ with st.expander("**Objective**",True):
 	st.write(''' ''',unsafe_allow_html=True)
 	st.write('''<div style="text-align: justify">
 			\nUsing any of the simulations above, estimate the structural natural frequency and damping coefficient for the tower 1$^{st}$ FA mode.
+			**Note that you may need to reduce the time range for the modal analysis or filter the data to obtain better results.**
 			\nIf you have time, you may repeat the analysis with the AeroDyn module enabled and different pitch angles.
 			\n Once you have finished, you may download a report of the analysis.
 			</div>''',unsafe_allow_html=True)
@@ -389,10 +390,6 @@ exp = st.expander('**Export report**',False)
 
 with exp:
 	report_text = st.text_input("Name")
-	st.write('''<div style="text-align: justify">
-		\nNote that you may need to reduce the time range for the modal analysis or filter the data to obtain better results.
-		</div>''',unsafe_allow_html=True)
-
 
 exp_c = exp.columns([0.25,0.25,0.5])
 export_as_pdf = exp_c[0].button("Generate Report")
