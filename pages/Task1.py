@@ -107,8 +107,8 @@ try:
 			
 			n_modes = cols[0].number_input('Number of modes',2,None,3)
 			N = cols[1].number_input('Number of points',5,None,20)
-			mtop = cols[2].number_input('Rotor mass',0,None,0)
-			L= cols[3].number_input('Tower height',10,None,100)
+			mtop = cols[2].number_input('Rotor mass',0.0,None,0.0)
+			L= cols[3].number_input('Tower height',10.0,None,100.0)
 
 			fig = TowerModesPlot(np.array(tower.iloc[:,0]),
 						   		 np.array(tower.iloc[:,1]),
@@ -150,4 +150,4 @@ exp_c = exp.columns([0.25,0.25,0.5])
 export_as_pdf = exp_c[0].button("Generate Report")
 
 if export_as_pdf:
-    create_pdf_week1([fig],report_text,'Task 1: Modal configurations','Task1_report',exp_c[1],exp,s1,s2)
+    create_pdf_task1([fig],report_text,'Task 1: Modal configurations','Task1_report',exp_c[1],exp,s1,s2)
