@@ -3,11 +3,10 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from ipywidgets import *
+
 from scipy import signal , integrate, linalg
 from scipy.signal import hilbert
-import ipywidgets as widgets
-from IPython.display import display, HTML
+
 import os
 import random
 from scipy.signal import find_peaks
