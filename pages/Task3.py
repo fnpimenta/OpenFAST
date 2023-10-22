@@ -43,7 +43,7 @@ with st.expander("**Objective**",True):
 			2. 0$º$ pitch angle''')
 	st.write(''' ''',unsafe_allow_html=True)
 	st.write('''<div style="text-align: justify">
-			\nEstimate the damping coefficient for the 2 cases above. **Do not forget to enable the Aerodyn modulus.**
+			\nEstimate the damping coefficient for the 2 cases above. **Do not forget to enable the Aerodyn module.**
 			\n Once you have finished, you may download a report of the analysis.
 			</div>''',unsafe_allow_html=True)
 
