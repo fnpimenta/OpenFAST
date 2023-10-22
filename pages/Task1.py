@@ -118,8 +118,8 @@ try:
 
 			n_modes = cols[0].number_input('Number of modes',2,None,3)
 			N = cols[1].number_input('Number of points',5,None,20)
-			mtop = cols[2].number_input('Tip mass',0,None,0)
-			L= cols[3].number_input('Blade length',10,None,100)
+			mtop = cols[2].number_input('Tip mass',0.0,None,0.0)
+			L= cols[3].number_input('Blade length',10.0,None,100.0)
 
 			fig = BladesModesPlot(np.array(tower.iloc[:,0]),
 								  np.array(tower.iloc[:,3]),
