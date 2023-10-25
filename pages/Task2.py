@@ -229,13 +229,10 @@ with st.expander("**Data analysis**",True):
 			cols = st.columns(4)
 
 			file_id = int(cols[0].selectbox('File for the analysis',range(1,1+len(file))) - 1)
-			#trange = cols[1].slider('Time range for the analysis',t_min,t_max,t_max)
-
-
-			#make_analysis = st.checkbox('Run analysis')
-			make_analysis = 1
 
 			cols = st.columns(2)
+
+			make_analysis = 1
 			if make_analysis:
 
 				peaks_types = {
@@ -279,56 +276,57 @@ with st.expander("**Data analysis**",True):
 				cols = st.columns(2)
 
 				if nfiles[file_id]>=0:
+					try:
+						file[file_id].seek(0)
+						data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 
-					file[file_id].seek(0)
-					data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
+						if not(filt_type=='No filter'):
 
-					if not(filt_type=='No filter'):
+							y = np.array(data[dof])
+							t = np.array(data[tcol])
+							y_doubled = np.zeros(2*len(y)-1)
 
-						y = np.array(data[dof])
-						t = np.array(data[tcol])
-						y_doubled = np.zeros(2*len(y)-1)
-
-						# Double the time series to avoid filter impact at the beginning
-						y_doubled[len(y)-1:] = y
-						y_doubled[:len(y)-1] = y[:0:-1]
-						y_filt = signal.sosfiltfilt(sos, y_doubled)[len(y)-1:]
-
-
-					else:
-						y_filt = y = np.array(data[dof])
-						t = np.array(data[tcol])
-
-					# Define the time series limits for analysis
-					time_filter = (t>=t_min) & (t<=t_max)
-
-					# Estimate the offset and zero the time series
-					offset = offset_estimator(y_filt[time_filter])
-					y_zerod = y_filt - offset
-
-					# Estimate the peaks of the zeroed time series
-					peaks_time, peaks_amp = peaks_estimator(t[time_filter],y_zerod[time_filter],peaks_types[peaks_type],0)
-
-					# Estiamte of the dynamic properties of the free decay
-					xi_est, f_est = dynamic_estimator(peaks_time,peaks_amp,peaks_type=peaks_types[peaks_type])
-
-					# Compute the power spectrum of the time series for analysis (for representation purposes only)
-					f, Pxx = signal.welch(y[time_filter], fs, nperseg=nfft , scaling='spectrum')
-					f, Pxx_filt = signal.welch(y_filt[time_filter], fs, nperseg=nfft , scaling='spectrum')
+							# Double the time series to avoid filter impact at the beginning
+							y_doubled[len(y)-1:] = y
+							y_doubled[:len(y)-1] = y[:0:-1]
+							y_filt = signal.sosfiltfilt(sos, y_doubled)[len(y)-1:]
 
 
-					# Create the figure to plot
-					fig_decay = free_decay_plot(t,y,y_filt,offset,
-										  peaks_time,peaks_amp,
-										  xi_est,f_est,
-										  f,Pxx, Pxx_filt,
-										  fs,sos,f_max,not(filt_type=='No filter')*1,
-										  time_filter,
-										  fit_types[fit_type])
+						else:
+							y_filt = y = np.array(data[dof])
+							t = np.array(data[tcol])
 
-					figs.append(fig_decay)
-					st.pyplot(fig_decay)
+						# Define the time series limits for analysis
+						time_filter = (t>=t_min) & (t<=t_max)
 
+						# Estimate the offset and zero the time series
+						offset = offset_estimator(y_filt[time_filter])
+						y_zerod = y_filt - offset
+
+						# Estimate the peaks of the zeroed time series
+						peaks_time, peaks_amp = peaks_estimator(t[time_filter],y_zerod[time_filter],peaks_types[peaks_type],0)
+
+						# Estiamte of the dynamic properties of the free decay
+						xi_est, f_est = dynamic_estimator(peaks_time,peaks_amp,peaks_type=peaks_types[peaks_type])
+
+						# Compute the power spectrum of the time series for analysis (for representation purposes only)
+						f, Pxx = signal.welch(y[time_filter], fs, nperseg=nfft , scaling='spectrum')
+						f, Pxx_filt = signal.welch(y_filt[time_filter], fs, nperseg=nfft , scaling='spectrum')
+
+
+						# Create the figure to plot
+						fig_decay = free_decay_plot(t,y,y_filt,offset,
+											  peaks_time,peaks_amp,
+											  xi_est,f_est,
+											  f,Pxx, Pxx_filt,
+											  fs,sos,f_max,not(filt_type=='No filter')*1,
+											  time_filter,
+											  fit_types[fit_type])
+
+						figs.append(fig_decay)
+						st.pyplot(fig_decay)
+					except:
+						st.warning('No peaks were found for the free decay analysis. Please check the selected time series.', icon="⚠️")
 
 				else:
 					st.warning('The selected file has not been uploaded properly.', icon="⚠️")
