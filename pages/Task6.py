@@ -3,16 +3,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.colors
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 import os
 import io
 from scipy import signal
+import seaborn as sns
 
 from modes import *
 from estimators import *
 from plot_generators import *
 from Print import *
-from TurbSim import TurbSimData
-from tempfile import NamedTemporaryFile
+from TurbSim import TurbSimData, TurbSimFile, FullFieldPlot
+
 
 import struct
 import time
@@ -22,13 +26,12 @@ from PIL import Image
 # -- Set page config
 apptitle = 'OpenFAST Course - Task 6'
 icon = Image.open('feup_logo.ico')
-st.set_page_config(page_title=apptitle, page_icon=icon)
+st.set_page_config(page_title=apptitle, page_icon=icon )
 
 st.title('Task 6 - Generate a 3D full wind field with TurbSim.')
 
 # -- Load data files
 @st.cache_data()
-
 def load_data(uploaded_files,n1,n2):
 	try:
 		data = pd.read_csv(uploaded_file,skiprows=n1,nrows=n2-n1,delimiter="\s+",encoding_errors='replace')
@@ -133,8 +136,98 @@ with st.expander("**Hints**",False):
 with st.expander("**Data analysis**",True):
 	st.write('Uploaded the output files from OpenFAST')
 
-	f = st.file_uploader("1 FA mode only ",accept_multiple_files=False)
-	data = TurbSimData(f)
+	filename = st.file_uploader("1 FA mode only ",accept_multiple_files=False)
+
+	if not filename==None:
+		cols = st.columns(2)
+		with cols[0]:
+			FullFieldPlot(filename,cols[0])
+
+		fdata = TurbSimFile(filename)
+
+		u = fdata.vertProfile(y_span='mid')
+
+		colors = cm.rainbow(np.linspace(0,1,51))
+
+		fig = plt.figure(figsize = (6,4.5))
+
+		ax = plt.subplot()
+
+		for i in range(50):
+			fu = fdata._vertline(ix0=int(len(fdata['t'])/50)*i , iy0=6)
+			ax.plot(fu[0],fdata['z'] , '--',color='k',lw=0.5)
+
+		ax.plot(u[1][0,:],fdata['z'],lw=4)
+		ax.fill_betweenx(fdata['z'],u[1][0,:]-u[2][0,:],u[1][0,:]+u[2][0,:],alpha=0.25)
+
+		ax.set_xlabel('Wind speed (m/s)')
+		ax.set_ylabel('height above ground (m)')
+
+		ax.set_title('Vertical wind profile')
+		ax.set_ylim(fdata['z'][0],fdata['z'][-1])
+		cols[1].pyplot(fig)
+
+		cols = st.columns(2)
+		yp = cols[0].number_input('Point height for the analysis',
+									min_value=np.round(fdata['y'][0],0),
+									max_value=np.round(fdata['y'][-1],0),
+									value=0.0)
+		zp = cols[1].number_input('Horizontal position for the analysis',
+									min_value=np.round(fdata['z'][0],0),
+									max_value=np.round(fdata['z'][-1],0),
+									value=fdata['zRef'])
+		u = fdata.valuesAt(yp,zp)
+		
+		cols = st.columns(3)
+
+		cols[0].markdown('Wind speed $\mu$: %.1f m/s'%np.mean(u[0]))
+		cols[1].markdown('Wind speed $\sigma$: %.1f m/s'%np.std(u[0]))
+		cols[2].markdown('TI: %.1f'%(100*np.std(u[0])/np.mean(u[0])) + ' \%')
+
+		fig = plt.figure(figsize = (12,4))
+
+		gs = gridspec.GridSpec(1,3)
+		gs.update(hspace=0.05,wspace=0.1)
+
+		ax1 = plt.subplot(gs[0,0])
+		ax2 = plt.subplot(gs[0,1])
+		ax3 = plt.subplot(gs[0,2])
+		
+		ax1.plot(fdata['t'],u[0])
+		ax1.axhline(np.mean(u[0]),ls='-.',c='k')
+		
+		nfft = 2048
+		f, Pxx = signal.welch(u[0], 20 , nperseg=nfft , scaling='spectrum')
+
+		sns.histplot(x=u[0],
+		             kde=True,
+		             element='step',
+		             alpha=0.10,
+		             stat='probability',
+		             line_kws={'linewidth':4},
+		             ax=ax2)
+
+		ax3.semilogy(f,Pxx)
+
+		ax1.set_title('Time series at the selected point')
+		ax2.set_title('Amplitude distribution')
+		ax3.set_title('Amplitude power spectrum')
+
+		ax1.set_xlabel('Time (s)')
+		ax2.set_xlabel('Wind speed (m/s)')
+		ax3.set_xlabel('Frequency (Hz)')
+
+		ax2.set_ylabel('')
+		ax2.set_yticks([])
+
+		ax3.set_ylabel('')
+		ax3.set_yticks([])
+
+		ax1.set_xlim(fdata['t'][0],fdata['t'][-1])
+		ax3.set_xlim(f[0],f[-1])
+		st.pyplot(fig)
+
+
 
 exp = st.expander('**Export report**',False)
 
@@ -145,6 +238,6 @@ exp_c = exp.columns([0.25,0.25,0.5])
 export_as_pdf = exp_c[0].button("Generate Report")
 if export_as_pdf:
 	try:
-		create_pdf_task4(figs,report_text,'Task 2: Free decay analysis','Task2_report',exp_c[1],exp,file_id+1)
+		create_pdf_task4(figs,report_text,'Task 4: Full 3D wind field generator','Task4_report',exp_c[1],exp,file_id+1)
 	except:
 		exp.error('Something went wrong. No file available for the analysis.', icon="⚠️")
