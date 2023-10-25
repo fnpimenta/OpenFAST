@@ -28,7 +28,7 @@ apptitle = 'OpenFAST Course - Task 6'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon )
 
-st.title('Task 6 - Generate a 3D full wind field with TurbSim.')
+st.title('Task 3 - Generate a 3D full wind field with TurbSim.')
 
 # -- Load data files
 @st.cache_data()
@@ -180,7 +180,7 @@ with st.expander("**Data analysis**",True):
 									max_value=np.round(fdata['y'][-1],0),
 									value=0.0)
 		u = fdata.valuesAt(y=yp,z=zp)
-		
+
 		cols = st.columns(3)
 
 		cols[0].markdown('Wind speed $\mu$: %.1f m/s'%np.mean(u[0]))
@@ -195,7 +195,7 @@ with st.expander("**Data analysis**",True):
 		ax2 = plt.subplot(gs[0,1])
 		ax1 = plt.subplot(gs[0,0])
 		ax3 = plt.subplot(gs[0,2])
-		
+
 		ax1.plot(fdata['t'],u[0])
 		ax1.axhline(np.mean(u[0]),ls='-.',c='k')
 
