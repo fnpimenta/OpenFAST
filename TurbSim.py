@@ -78,7 +78,7 @@ def FullFieldPlot(f,_placeholder,nstep=1000):
 	m = cm.ScalarMappable(cmap=plt.cm.jet, norm=norm)
 	m.set_array([])
    
-	plt.colorbar(m,fraction=0.025)
+	plt.colorbar(m,fraction=0.025,cax=ax)
 
 	ax.view_init(30, 210)
 	#ax.axis('off')
