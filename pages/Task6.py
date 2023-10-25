@@ -14,11 +14,11 @@ from Print import *
 from PIL import Image
 
 # -- Set page config
-apptitle = 'OpenFAST Course - Task 3'
+apptitle = 'OpenFAST Course - Task 6'
 icon = Image.open('feup_logo.ico')
-st.set_page_config(page_title=apptitle, page_icon=icon , layout='wide')
+st.set_page_config(page_title=apptitle, page_icon=icon)
 
-st.title('Task 3 - Free decay analysis with AeroDyn')
+st.title('Task 6 - Normal operation simulations with prescribed initial conditions.')
 
 # -- Load data files
 @st.cache_data()
@@ -36,15 +36,27 @@ def load_data(uploaded_files,n1,n2):
 with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
-			\nTo better understand the impact of the Aerodyn modules, you will repeat the analysis from Task 3, but now taking into account the aerodynamic forces on the rotor.
-			Run a free decay analysis with the following pitch conditions:</div>''',unsafe_allow_html=True)
-	st.write(r'''
-			1. 90$º$ pitch angle
-			2. 0$º$ pitch angle''')
-	st.write(''' ''',unsafe_allow_html=True)
-	st.write('''<div style="text-align: justify">
-			\nEstimate the damping coefficient for the 2 cases above. **Do not forget to enable the Aerodyn module.**
-			\n Once you have finished, you may download a report of the analysis.
+			\nWe are now in conditions to perform some simple simulations. Prepare all the files needed to estimate the bending moments at the tower base and the thrust force in the rotor for different wind models.
+			\nSince the wind turbine controls are not yet implemented, you will have to define the adequate initial conditions for the simulation. 
+			Additionally, as the aerodynamic torque sourced by the lift forces is still unbalanced, once again because the wind turbine controls are still not implemented, you will have to disable the generator degree of freedom to ensure that it will not accelerate indefinitely. 
+			The suggested procedure is the following:
+1. Modify the OpenFAST input file:
+	- Modify the comment line for a description of your simulation
+	- Modify the simulation time to 1000s (do not forget that we will reject the first 400s to ensure a physical solution) in the <b>SIMULATION CONTROL</b>
+	- Activate the ElastoDyn, the AeroDyn and the InflowWind modules in <b>FEATURE SWITCHES AND FLAGS</b>
+	- Include the paths to the corresponding input files <b>INPUT FILES</b> section
+1. Modify the ElastoDyn file:
+	- Disable the generator degree of freedom (GenDOF) in the <b>DEGREES OF FREEDOM</b> such that the rotor angular velocity prescribed is kept constant across the simulation
+	- Modify the initial pitch value and rotor angular velocity for the values compatible with your wind speed in the <b>INITIAL CONDITIONS</b> (if you are using the file from the previous task, do not forget to remove the tower top initial displacement).
+	- Verify that the output list defined in <b>OUTPUT</b> included the values that you want to estimate. You may find a list of all the available output variables in the file <code>09_AuxiliaryFiles\OutListParameters.xlsx</code>
+	- Ensure that you have the following outputs:
+  		- Blade 1 pitch angle: "BldPitch1"
+  		- Rotor speed, torque and thrust: "RotSpeed", "RotTorq" and "RotThrust"                         
+  		- Tower base FA and SS bending moments: "TwrBsMyt" and "TwrBsMxt"
+1. Modify the InflowWind file:
+	- Modify the wind type for a steady wind in <b>Wind model</b>
+	- Modify the wind speed reference value for your wind speed in <b>Parameters for Steady Wind Conditions</b>
+1. Run the OpenFAST simulation and upload the output files.
 			</div>''',unsafe_allow_html=True)
 
 figs = []
@@ -68,7 +80,7 @@ with st.expander("**Hints**",False):
 	st.write('''<div style="text-align: justify">
 			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
 			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted**.
-			\nDo not forget to modify the **simulation length** and select **the ElastoDyn and the AerodDyn modules in the OpenFAST input file**.
+			\nDo not forget to modify the **simulation length** and select **only the ElastoDyn module in the OpenFAST input file**.
 			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
 			</div>''',unsafe_allow_html=True)
 	c1,c2,c3 = st.columns(3)
@@ -137,192 +149,70 @@ with st.expander("**Data analysis**",True):
 
 	cols0 = st.columns(2)
 	file = []
-	file.append(cols0[0].file_uploader("90$º$ pitch",accept_multiple_files=False))
-	file.append(cols0[1].file_uploader("0$º$ pitch",accept_multiple_files=False))
+	file.append(cols0[0].file_uploader("Steady wind",accept_multiple_files=False))
+	file.append(cols0[1].file_uploader("TurbSim wind",accept_multiple_files=False))
 	
-	nfiles = np.zeros(len(file))-1
+	error_check = 0
 	for i in range(len(file)):
 		if not(file[i]==None):
-			nfiles[i] = int(i)
+			error_check += 1
 
-	if sum(nfiles>=0)>0:
-		file[0].seek(0)
-		data = pd.read_csv(file[0] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-		file[0].seek(0)
-		units = pd.read_csv(file[0], skiprows=[0,1,2,3,4,5] , nrows=1,delimiter=r"\s+")
+	if error_check>0:
+		fig = plt.figure(figsize = (12,12))
 
+		gs = gridspec.GridSpec(3,2,wspace=0.25,hspace=0.1)
 
-		keys = data.columns
-		nvar = len(keys)
+		ax1 = plt.subplot(gs[0,0])
+		ax2 = plt.subplot(gs[0,1])	
 
-		cols = st.columns(2)
+		ax3 = plt.subplot(gs[1,0])
+		ax4 = plt.subplot(gs[1,1])
 
-		tcol = cols[0].selectbox('Time column', data.columns,index=0)
-		dof = cols[1].selectbox('Data column', data.columns,index=1)
+		ax5 = plt.subplot(gs[2,0])
+		ax6 = plt.subplot(gs[2,1])	
 
-		t_min,t_max = cols[0].slider('Time range',0.0,float(data[tcol].iloc[-1]),(0.0,float(data[tcol].iloc[-1])))
-		f_min,f_max = cols[1].slider('Frequency range',0.0,float(0.5/(data[tcol][1]-data[tcol][0])),(0.0,float(0.25/(data[tcol][1]-data[tcol][0]))))
+		labels = ['Steady wind', 'TurbSim wind field']
+		for i in range(len(file)):
+			if not(file[i]==None):
+				
+				file[i].seek(0)
+				data = pd.read_csv(file[i] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
 
-		tfilter = (data[tcol]>=t_min) & (data[tcol]<=t_max)
+				file[i].seek(0)
+				units = pd.read_csv(file[i], skiprows=[0,1,2,3,4,5] , nrows=1,delimiter=r"\s+")
 
-		nmin = 4
-		nmax = np.max((int(np.log2(len(data[tfilter]))) + 1,8))
+				ax1.plot(data.Time,data.RotSpeed)
+				ax2.plot(data.Time,data.RotTorq)
 
+				ax3.plot(data.Time,data.BldPitch1)
+				ax4.plot(data.Time,data.RotThrust)
 
-		cols = st.columns([0.25,0.25,0.5])
+				ax5.plot(data.Time,data.TwrBsMyt,label=labels[i])
+				ax6.plot(data.Time,data.TwrBsMxt)
 
-		nfft = cols[2].select_slider('FFT number of points',[int(2**x) for x in np.arange(nmin,nmax)],int(2**(nmax-3)))
+				ax1.set_ylabel('Rotor angular velocity ($\Omega$)\n%s'%units.RotSpeed.iloc[0])
+				ax2.set_ylabel('Rotor torque\n%s'%units.RotTorq.iloc[0])
+				ax3.set_ylabel('Blade pitch angle\n%s'%units.BldPitch1.iloc[0])
+				ax4.set_ylabel('Rotor thrust\n%s'%units.RotThrust.iloc[0])
+				ax5.set_ylabel('Tower base FA bending moment\n%s'%units.TwrBsMyt.iloc[0])
+				ax6.set_ylabel('Tower base SS bending moment\n%s'%units.TwrBsMxt.iloc[0])
 
-		fs = 1/np.array(data[tcol][1]-data[tcol][0])
+		ax1.set_xticklabels('')
+		ax2.set_xticklabels('')
+		ax3.set_xticklabels('')
+		ax4.set_xticklabels('')
 
-		make_analysis = 1
-		if make_analysis:
+		ax5.set_xlabel('Time (s)')
+		ax6.set_xlabel('Time (s)')
 
-			peaks_types = {
-						 "Positive peaks only": 0,
-						 "All peaks": 1,
-						}
+		ax5.legend(loc='upper center',
+		 			bbox_to_anchor=(1.1,-0.2),
+					ncol=3,
+					fancybox=False,
+					framealpha=1,
+					frameon=False)
 
-			peaks_type = cols[0].radio('Peaks to use', peaks_types.keys(),horizontal=True)
-
-			fit_types = {
-						 "Trend line": 0,
-						 "Mean value": 1,
-						}
-
-			fit_type = cols[1].radio('Fit type', fit_types.keys(),horizontal=True,index=0)
-
-			cols = st.columns(4)
-			filt_type = cols[0].selectbox('Filter type', ['No filter','Low-pass','High-pass','Band-pass'],index=0)
-
-			filt_order = cols[1].slider('Filter order',4,12,8,disabled=(filt_type=='No filter'))
-
-			if filt_type == 'Low-pass':
-				fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
-				fmax = cols[3].number_input('Upper limit of the filter', min_value=0.0, max_value=f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
-				sos = signal.butter(filt_order  , fmax, 'lowpass' , fs=fs , output='sos', analog=False)
-
-			elif filt_type == 'High-pass':
-				fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
-				fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
-				sos = signal.butter(filt_order  , fmin, 'highpass' , fs=fs , output='sos', analog=False)
-
-			elif filt_type == 'Band-pass':
-				fmin = cols[2].number_input('Lower limit of the filter', 0.0, f_max, value=float(f_max/8),disabled=(filt_type=='No filter'))  # min, max, default
-				fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/4),disabled=(filt_type=='No filter'))  # min, max, default
-				sos = signal.butter(filt_order  , [fmin,fmax], 'bandpass' , fs=fs , output='sos', analog=False)
-			else:
-				fmin = cols[2].number_input('Lower limit of the filter', min_value=0.0, max_value=f_max, value=0.0,disabled=True)  # min, max, default
-				fmax = cols[3].number_input('Upper limit of the filter', 0.0, f_max, value=float(f_max/2),disabled=True)  # min, max, default
-				sos = 0
-
-			cols = st.columns(2)
-
-			for file_id in range(2):
-				if nfiles[file_id]>=0:
-					file[file_id].seek(0)
-					data = pd.read_csv(file[file_id] , skiprows=[0,1,2,3,4,5,7] , delimiter=r"\s+",header=0)
-
-					if not(filt_type=='No filter'):
-
-						y = np.array(data[dof])
-						t = np.array(data[tcol])
-						y_doubled = np.zeros(2*len(y)-1)
-
-						# Double the time series to avoid filter impact at the beginning
-						y_doubled[len(y)-1:] = y
-						y_doubled[:len(y)-1] = y[:0:-1]
-						y_filt = signal.sosfiltfilt(sos, y_doubled)[len(y)-1:]
-
-
-					else:
-						y_filt = y = np.array(data[dof])
-						t = np.array(data[tcol])
-
-					# Define the time series limits for analysis
-					time_filter = (t>=t_min) & (t<=t_max)
-
-					# Estimate the offset and zero the time series
-					offset = offset_estimator(y_filt[time_filter])
-					y_zerod = y_filt - offset
-
-					# Estimate the peaks of the zeroed time series
-					peaks_time, peaks_amp = peaks_estimator(t[time_filter],y_zerod[time_filter],peaks_types[peaks_type],0)
-
-					# Estiamte of the dynamic properties of the free decay
-					xi_est, f_est = dynamic_estimator(peaks_time,peaks_amp,peaks_type=peaks_types[peaks_type])
-
-					# Compute the power spectrum of the time series for analysis (for representation purposes only)
-					f, Pxx = signal.welch(y[time_filter], fs, nperseg=nfft , scaling='spectrum')
-					f, Pxx_filt = signal.welch(y_filt[time_filter], fs, nperseg=nfft , scaling='spectrum')
-
-
-					# Create the figure to plot
-					fig_decay = free_decay_plot(t,y,y_filt,offset,
-										  		peaks_time,peaks_amp,
-										  		xi_est,f_est,
-										  		f,Pxx, Pxx_filt,
-										  		fs,sos,f_max,not(filt_type=='No filter')*1,
-										  		time_filter,
-										  		fit_types[fit_type])
-
-					figs.append(fig_decay)
-					cols0[file_id].pyplot(fig_decay)
-
-
-				else:
-					cols[file_id].warning('File %d has not been uploaded properly.'%(file_id+1), icon="⚠️")
-
-
-with st.expander('**See explanation**',False):
-	st.write(r'''
-		The free equation of motion (without any external load) for a single degree of freedom system is given by:
-		$$
-			m\ddot{x}(t) = -kx(t) - f_d(t)
-		$$
-		where $f_d(t)$ is the damping force, here taken to be a generic function of time.
-		In the simplified numerical simulation above, the damping force is assumed to be such that:
-		$$
-		   f_d(t) = c_1x(t) + c_2|\dot{x}(t)-u_r|(\dot{x}(t)-u_r)
-		$$
-		where $u_r$ is external flow velocity.
-
-		For the linear damping model ($c_2=0$), the differential equation above has the well known solution:
-		$$
-			x(t) = Ae^{-\xi\omega_0 t}\cos(w\sqrt{1-\xi^2}t+\phi) = Ae^{-\xi\omega_0 t}\cos(w_dt+\phi)
-		$$
-		where $\omega_0=\sqrt{\frac{k}{m}}$ is the system undamped natural frequency and $\xi$ is the damping ratio,
-		defined as the ratio between the damping coefficient and its critical value as:
-		$$
-			\xi=\frac{c_1}{c_{cr}}=\frac{c_1}{2m\omega_0}
-		$$
-		One may immediately see that the response is given by a periodic function modulated by a negative exponential,
-		implying that $\xi$ can be evaluated through the response amplitude, since:
-		$$
-			\ln(Ae^{-\xi\omega_0 t}) = \ln(A) - \xi\omega_0t
-		$$
-		meaning that the envelope amplitde natural logarithm, here obtained through the peak value in every oscillation, is a linear function of time with slope $-\xi\omega_0$.
-
-		Although this is no longer true if $c_2\neq0$, for low damping forces, one may still make some general considerations based on energy dissipation.
-		Firslty, it should be noted that the energy dissipation over a full cyle may be written as:
-		$$
-			W = \int_Tf_d(t)dx
-		$$
-		For the linear damping contribution, one finds:
-		$$
-			W_l = c_1\int_T\dot{x}(t)dx = c_1\int_T\dot{x}^2dt \approx  c_1A^2\omega_0^2\int_T\sin^2(\omega_0 t)dt = c_1\left(A^2\omega_0\pi\right)
-		$$
-		where it was assumed that to first order the motion may be approximated over a cycle as $x(t)=A\cos(\omega_0t)$.
-		Under the same assumption, the quadratic contribution, for $u_r=0$, may be obtained as:
-		$$
-			W_q = c_2\int_T|\dot{x}(t)|\dot{x}(t)dx = 2c_2\int_{T/2}\dot{x}^3dt \approx 2c_2A^3\omega_0^3\int_{T/2}\sin^3(\omega_0t)dt = c_2 \frac{8A^3\omega_0^2}{3}
-		$$
-		By comparison with the linear damping result, it follows that the linear coefficient that best approximates the quadratic response in terms of energy dissipation is:
-		$$
-			 \tilde{c} = c_2 \frac{8\omega_0}{3\pi} A
-		$$
-		From the expression above, it can be seen that for a purely quadratic damping force, a linear dependency on the motion amplitude is expected.
-	''')
+		st.pyplot(fig)
 
 
 
@@ -335,6 +225,6 @@ exp_c = exp.columns([0.25,0.25,0.5])
 export_as_pdf = exp_c[0].button("Generate Report")
 if export_as_pdf:
 	try:
-		create_pdf_task3(figs,report_text,'Task 3: Free decay analysis with AeroDyn','Task3_report',exp_c[1],exp,file_id+1)
+		create_pdf_task6(fig,report_text,'Task 6: Normal operation simulations','Task6_report',exp_c[1],exp)
 	except:
 		exp.error('Something went wrong. No file available for the analysis.', icon="⚠️")

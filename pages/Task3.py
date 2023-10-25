@@ -24,11 +24,11 @@ import time
 from PIL import Image
 
 # -- Set page config
-apptitle = 'OpenFAST Course - Task 6'
+apptitle = 'OpenFAST Course - Task 3'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon )
 
-st.title('Task 6 - Generate a 3D full wind field with TurbSim.')
+st.title('Task 3 - Generate a 3D full wind field with TurbSim.')
 
 # -- Load data files
 @st.cache_data()
