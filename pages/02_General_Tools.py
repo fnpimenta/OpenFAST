@@ -68,12 +68,13 @@ if tab_idx == 0:
 	cols = st.columns(2)
 	# -- Load data files
 	ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-	ref_model = cols[0].selectbox('Reference model', ref_models)
+	ref_model = cols[0].selectbox('Reference model', ref_models,index=1,disabled=True)
 	ref_path = ref_models[ref_model]
 
 	sel_dir = '03_AeroDyn/Airfoils'
 
 	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/')
+	all_files = ['S818.dat']
 	uploaded_file = cols[1].selectbox('Available aerofoils', all_files)
 
 	try:
