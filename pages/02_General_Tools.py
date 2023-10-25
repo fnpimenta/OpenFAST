@@ -83,7 +83,7 @@ if tab_idx == 0:
 		cols = st.columns(4)
 
 		n_calc = cols[0].slider('Nº panels',10,80,20,step=2)
-		alpha = cols[1].number_input('Angle of attack',-10,10,0)
+		alpha = cols[1].number_input('Angle of attack',-10.0,10.0,0.0)
 		u0 = cols[2].number_input('Free stream velocity',1,None,10)
 		chord = cols[3].number_input('Chord',None,None,1)
 
