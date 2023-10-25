@@ -1,8 +1,3 @@
-"""Read/Write TurbSim File
-
-Part of weio library: https://github.com/ebranlard/weio
-
-"""
 import pandas as pd
 import numpy as np
 import os
@@ -59,7 +54,7 @@ def TurbSimData(f):
 	return data
 
 @st.cache_data()
-def FullFieldPlot(f,_placeholder,nstep=100):
+def FullFieldPlot(f,_placeholder,nstep=1000):
 	fdata = TurbSimFile(f)
 	data = fdata['u'][0,::nstep,:,:]
 
@@ -99,6 +94,8 @@ def FullFieldPlot(f,_placeholder,nstep=100):
 
 	ax.grid(False)
 	st.pyplot(fig)
+
+	return fig
 
 EmptyFileError = type('EmptyFileError', (Exception,),{})
 File=dict
