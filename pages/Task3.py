@@ -24,7 +24,7 @@ import time
 from PIL import Image
 
 # -- Set page config
-apptitle = 'OpenFAST Course - Task 6'
+apptitle = 'OpenFAST Course - Task 3'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon )
 
@@ -141,8 +141,10 @@ with st.expander("**Data analysis**",True):
 
 	if not filename==None:
 		cols = st.columns(2)
+		nstep = cols[0].number_input('Interval of time steps to plot',100,None,1000)
+		cols = st.columns(2)
 		with cols[0]:
-			fig = FullFieldPlot(filename,cols[0])
+			fig = FullFieldPlot(filename,cols[0],nstep)
 			figs.append(fig)
 		fdata = TurbSimFile(filename)
 
@@ -150,7 +152,7 @@ with st.expander("**Data analysis**",True):
 
 		colors = cm.rainbow(np.linspace(0,1,51))
 
-		fig = plt.figure(figsize = (6,4.5))
+		fig = plt.figure(figsize = (6,6))
 
 		ax = plt.subplot()
 

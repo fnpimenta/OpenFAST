@@ -121,12 +121,12 @@ def create_pdf_task3(figs,name,title,FileName,placeholder,placeholder_pdf,yp=0,z
 		figs[1].savefig(tmpfile.name, bbox_inches='tight')
 		pdf.image(tmpfile.name,105,60 ,w=80,h=0)
 
-	pdf.cell(0, 75, '',border=border,align='L',ln=1)
+	pdf.cell(0, 90, '',border=border,align='L',ln=1)
 	pdf.cell(45, 10,'Detailed analysis of the wind speeds in y=%.1f m and z=%.1f m'%(yp,zp),border=border,align='L',ln=1)
 
 	with NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
 		figs[2].savefig(tmpfile.name, bbox_inches='tight')
-		pdf.image(tmpfile.name,25,150 ,w=160,h=0)
+		pdf.image(tmpfile.name,25,165 ,w=160,h=0)
 
 	html = create_download_link(pdf.output(dest="S").encode("latin-1"), FileName)
 	placeholder.markdown(html, unsafe_allow_html=True)
