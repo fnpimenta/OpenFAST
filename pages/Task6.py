@@ -62,6 +62,8 @@ ax2.set_ylabel('$\Omega$ (rpm)')
 ax1.set_title('Pitch curve')
 ax2.set_title('Rotor angular velocity curve')
 
+plt.show()
+
 with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
