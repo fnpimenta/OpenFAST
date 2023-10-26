@@ -456,6 +456,8 @@ with st.expander("**Data analysis**",True):
 	file.append(cols0[1].file_uploader("TurbSim wind",accept_multiple_files=False))
 	
 	error_check = 0
+	input_error = np.zeros(6)-2
+
 	for i in range(len(file)):
 		if not(file[i]==None):
 			error_check += 1
@@ -483,22 +485,44 @@ with st.expander("**Data analysis**",True):
 
 				file[i].seek(0)
 				units = pd.read_csv(file[i], skiprows=[0,1,2,3,4,5] , nrows=1,delimiter=r"\s+")
+				
+				try:
+					ax1.plot(data.Time,data.RotSpeed)
+					ax1.set_ylabel('Rotor angular velocity ($\Omega$)\n%s'%units.RotSpeed.iloc[0])
+				except:
+					input_error[0] += 1
 
-				ax1.plot(data.Time,data.RotSpeed)
-				ax2.plot(data.Time,data.RotTorq)
+				try:
+					ax2.plot(data.Time,data.RotTorq)
+					ax2.set_ylabel('Rotor torque\n%s'%units.RotTorq.iloc[0])
+				except:
+					input_error[1] += 1
 
-				ax3.plot(data.Time,data.BldPitch1)
-				ax4.plot(data.Time,data.RotThrust)
+				try:
+					ax3.plot(data.Time,data.BldPitch1)
+					ax3.set_ylabel('Blade pitch angle\n%s'%units.BldPitch1.iloc[0])
+				except:
+					input_error[2] += 1				
 
-				ax5.plot(data.Time,data.TwrBsMyt,label=labels[i])
-				ax6.plot(data.Time,data.TwrBsMxt)
+				try:
+					ax4.plot(data.Time,data.RotThrust)
+					ax4.set_ylabel('Rotor thrust\n%s'%units.RotThrust.iloc[0])
+				except:
+					input_error[3] += 1
 
-				ax1.set_ylabel('Rotor angular velocity ($\Omega$)\n%s'%units.RotSpeed.iloc[0])
-				ax2.set_ylabel('Rotor torque\n%s'%units.RotTorq.iloc[0])
-				ax3.set_ylabel('Blade pitch angle\n%s'%units.BldPitch1.iloc[0])
-				ax4.set_ylabel('Rotor thrust\n%s'%units.RotThrust.iloc[0])
-				ax5.set_ylabel('Tower base FA bending moment\n%s'%units.TwrBsMyt.iloc[0])
-				ax6.set_ylabel('Tower base SS bending moment\n%s'%units.TwrBsMxt.iloc[0])
+				try:
+					ax5.plot(data.Time,data.TwrBsMyt,label=labels[i])
+					ax5.set_ylabel('Tower base FA bending moment\n%s'%units.TwrBsMyt.iloc[0])
+				except:
+					input_error[4] += 1
+
+				try:
+					ax6.plot(data.Time,data.TwrBsMxt)
+					ax6.set_ylabel('Tower base SS bending moment\n%s'%units.TwrBsMxt.iloc[0])
+				except:
+					input_error[5] += 1
+			else:
+				input_error += 1
 
 		ax1.set_xticklabels('')
 		ax2.set_xticklabels('')
@@ -508,6 +532,25 @@ with st.expander("**Data analysis**",True):
 		ax5.set_xlabel('Time (s)')
 		ax6.set_xlabel('Time (s)')
 
+		if input_error[0] == 0:
+			ax1.annotate('No data found for rotor angular velocity',(0.5,0.5),ha='center',xycoords='axes fraction')
+		
+		if input_error[1] == 0:
+			ax2.annotate('No data found for rotor torque',(0.5,0.5),ha='center',xycoords='axes fraction')
+		
+		if input_error[2] == 0:
+			ax3.annotate('No data found for blade pitch angle',(0.5,0.5),ha='center',xycoords='axes fraction')
+		
+		if input_error[3] == 0:
+			ax4.annotate('No data found for rotor thrust',(0.5,0.5),ha='center',xycoords='axes fraction')
+		
+		if input_error[4] == 0:
+			ax5.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+
+		if input_error[5] == 0:
+			ax6.annotate('No data found for tower SS bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+
+
 		ax5.legend(loc='upper center',
 		 			bbox_to_anchor=(1.1,-0.2),
 					ncol=3,
@@ -516,7 +559,6 @@ with st.expander("**Data analysis**",True):
 					frameon=False)
 
 		st.pyplot(fig)
-
 
 
 exp = st.expander('**Export report**',False)
