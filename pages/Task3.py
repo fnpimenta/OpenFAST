@@ -28,7 +28,7 @@ apptitle = 'OpenFAST Course - Task 3'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon )
 
-st.title('Task 3 - Generate a 3D full wind field with TurbSim.')
+st.title('Task 3 - Generate a 3D full wind field with TurbSim')
 
 # -- Load data files
 @st.cache_data()
@@ -47,6 +47,7 @@ with st.expander("**Objective**",True):
 	st.write('''<div style="text-align: justify">
 			\nFor this task it is suggested to generate a full 3D wind field using TurbSim for a mean wind speed of your choice and 10\% turbulence intensity.
 			\nAfter running TurbSim, upload the .bts file in the data analysis section to visualize the generated wind field.
+			\nYou may find a step-by-step procedure in the hints section.
 			</div>''',unsafe_allow_html=True)
 
 figs = []
@@ -66,79 +67,85 @@ PALETTE = [
 onshore_color = "#cc000033"
 offshore_color = "#0a75ad33"
 
+
+ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
+ref_path = ref_models['WP 1.5MW']
+
+file_turb = open('./OpenFAST_models/' + ref_path + '/' + '10_TurbSim' + '/' + 'TurbSim.inp', 'r')
+
+checkfile = 1
 with st.expander("**Hints**",False):
 	st.write('''<div style="text-align: justify">
-			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
-			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted**.
-			\nDo not forget to modify the **simulation length** and select **only the ElastoDyn module in the OpenFAST input file**.
-			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
+			\nTo generate the TurbSim full 3D wind field you should firstly prepare the **TurbSim input file**
+- Ensure that the output fill-field data in TurbSim/AeroDyn form is enabled in <b>Runtime options</b>
+- Check the turbulence scaling method in <b>Runtime options</b>
+- Check that the time length of the generated wind field (AnalsysiTime) is sufficient to run a 1000s simulation in <b>Turbine/Model Specifications</b>
+- Define the grid dimensions. hub height and grid-point spacing in <b>Turbine/Model Specifications</b>. Do not forget that your grid should be big enough to include all the rotor.
+- Define the reference wind velocity at the hub height and the turbulence intensity to 10\% in <b>Meteorological Boundary Conditions</b> section
+- Define vertical wind profile as a power law with exponent 0.20 <b>Meteorological Boundary Conditions</b> section
+	</div>''',unsafe_allow_html=True)
+
+	#checkfile = st.checkbox('**Show input file details**')
+	if checkfile:
+		data = []
+		for line in file_turb:
+			data.append(line)
+
+		
+		tab1,tab2,tab3 = st.tabs(['**Runtime options**',
+									   '**Turbine/Model Specifications**',
+									   '**Meteorological Boundary Conditions**'])
+
+		all_idx = range(3,16)
+		on_sel_idx = [9,15]
+		off_sel_idx = []
+		with tab1:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(18,28)
+		on_sel_idx = [18,19,21,23,24,25]
+		off_sel_idx = []
+		with tab2:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(30,43)
+		on_sel_idx = [33,36,38,39,41]
+		off_sel_idx = []
+		with tab3:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		st.divider()
+
+		st.write('''<div style="text-align: justify">
+				 \nAfter defining the input file, run the TurbSim generator by laucnhing a command window in the TurbSim.exe directory.
+				 \nThe command <code>TubrSim InputFile.inp</code> will run TurbSim with InputFile.inp as input file. 
+				 You may omit the argument and simply write <code>TubrSim InputFile.inp</code> to run TurbSim with TurbSim.inp as input file.
+				 \nAfter running TurbSim and creating the .bts file, upload it in the Data Analsysi section.
 			</div>''',unsafe_allow_html=True)
-	c1,c2,c3 = st.columns(3)
-
-	# -- Load data files
-	ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-	ref_model = c1.selectbox('Reference model', ref_models, index=1,disabled=True)
-	ref_path = ref_models[ref_model]
-
-	all_dir = os.listdir('./OpenFAST_models/' + ref_path )
-	sel_dir = c2.selectbox('Available modules', all_dir, index = 0 ,disabled=True)
-
-	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
-	sel_file = c3.selectbox('Available files', all_files, index = 1,disabled=True)
-	sel_file = 'WP_ElastoDyn.dat'
-
-	log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
-	data = []
-	for line in log:
-		data.append(line)
-
-	tab1,tab2,tab3,tab4 = st.tabs(['Simulation Control','**Degrees of freedom**','**Initial conditions**','Turbine configuration'])
-	for i in range(3,6):
-		tab1.write(data[i])
-
-	all_idx = range(9,26)
-	on_sel_idx = [9,10,11,16,17,18,19]
-	off_sel_idx = []
-
-	with tab2:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
-
-	all_idx = range(27,44)
-	on_sel_idx = [29,30,31,34,36]
-	off_sel_idx = []
-
-	with tab3:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
-
-	all_idx = range(45,71)
-	on_sel_idx = [34,36]
-	off_sel_idx = []
-	with tab4:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
 
 figs = []
 with st.expander("**Data analysis**",True):
-	st.write('Uploaded the output files from OpenFAST')
+	st.write('Upload the output file from TurbSim')
 
-	filename = st.file_uploader("1 FA mode only ",accept_multiple_files=False)
+	filename = st.file_uploader("TurbSim .bts file",accept_multiple_files=False)
 
 	if not filename==None:
 		fdata = TurbSimFile(filename)

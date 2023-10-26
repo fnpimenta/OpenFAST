@@ -18,7 +18,7 @@ apptitle = 'OpenFAST Course - Task 6'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon)
 
-st.title('Task 6 - Normal operation simulations with prescribed initial conditions.')
+st.title('Task 6 - Normal operation simulations with prescribed initial conditions')
 
 # -- Load data files
 @st.cache_data()
