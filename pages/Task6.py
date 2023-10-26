@@ -471,6 +471,7 @@ with st.expander("**Data analysis**",True):
 			error_check += 1
 
 	if error_check>0:
+		t_min,t_max = st.slider('Time range',0.0,1000.0,(0.0,1000.0))
 		fig = plt.figure(figsize = (12,12))
 
 		gs = gridspec.GridSpec(3,2,wspace=0.25,hspace=0.1)
@@ -494,38 +495,40 @@ with st.expander("**Data analysis**",True):
 				file[i].seek(0)
 				units = pd.read_csv(file[i], skiprows=[0,1,2,3,4,5] , nrows=1,delimiter=r"\s+")
 				
+				time_filter = (data.Time>=t_min) & (data.Time<=t_max)
+
 				try:
-					ax1.plot(data.Time,data.RotSpeed)
+					ax1.plot(data.Time[time_filter],data.RotSpeed[time_filter])
 					ax1.set_ylabel('Rotor angular velocity ($\Omega$)\n%s'%units.RotSpeed.iloc[0])
 				except:
 					input_error[0] += 1
 
 				try:
-					ax2.plot(data.Time,data.RotTorq)
+					ax2.plot(data.Time[time_filter],data.RotTorq[time_filter])
 					ax2.set_ylabel('Rotor torque\n%s'%units.RotTorq.iloc[0])
 				except:
 					input_error[1] += 1
 
 				try:
-					ax3.plot(data.Time,data.BldPitch1)
+					ax3.plot(data.Time[time_filter],data.BldPitch1[time_filter])
 					ax3.set_ylabel('Blade pitch angle\n%s'%units.BldPitch1.iloc[0])
 				except:
 					input_error[2] += 1				
 
 				try:
-					ax4.plot(data.Time,data.RotThrust)
+					ax4.plot(data.Time[time_filter],data.RotThrust[time_filter])
 					ax4.set_ylabel('Rotor thrust\n%s'%units.RotThrust.iloc[0])
 				except:
 					input_error[3] += 1
 
 				try:
-					ax5.plot(data.Time,data.TwrBsMyt,label=labels[i])
+					ax5.plot(data.Time[time_filter],data.TwrBsMyt[time_filter],label=labels[i])
 					ax5.set_ylabel('Tower base FA bending moment\n%s'%units.TwrBsMyt.iloc[0])
 				except:
 					input_error[4] += 1
 
 				try:
-					ax6.plot(data.Time,data.TwrBsMxt)
+					ax6.plot(data.Time[time_filter],data.TwrBsMxt[time_filter])
 					ax6.set_ylabel('Tower base SS bending moment\n%s'%units.TwrBsMxt.iloc[0])
 				except:
 					input_error[5] += 1
