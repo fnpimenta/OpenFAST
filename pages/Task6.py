@@ -471,7 +471,10 @@ with st.expander("**Data analysis**",True):
 			error_check += 1
 
 	if error_check>0:
-		t_min,t_max = st.slider('Time range',0.0,1000.0,(0.0,1000.0))
+		cols = st.columns(2)
+		t_min = cols[0].number_input('First time instant to plot',0.0,1000.0,0.0)
+		t_max = cols[1].number_input('Last time instant to plot',0.0,1000.0,1000.0)
+		
 		fig = plt.figure(figsize = (12,12))
 
 		gs = gridspec.GridSpec(3,2,wspace=0.25,hspace=0.1)
