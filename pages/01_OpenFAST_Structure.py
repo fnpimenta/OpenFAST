@@ -182,7 +182,7 @@ if tab_idx == 1:
 
 	with st.expander("**File explorer**",False):
 		tab1,tab2,tab3,tab4,tab5 = st.tabs(['Simulation Control',
-									   		'Environmental conditions',
+									   		'Degrees of freedom',
 									   		'Initial conditions',
 									   		'Turbine configuration',
 									   		'Mass and inertia'])

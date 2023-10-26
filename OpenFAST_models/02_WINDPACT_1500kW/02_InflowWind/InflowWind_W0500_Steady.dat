@@ -10,8 +10,8 @@
   84.2876   WindVziList    - List of coordinates in the inertial Z direction (m)
 ================== Parameters for Steady Wind Conditions [used only for WindType = 1] =========================
   5         HWindSpeed     - Horizontal wind speed                           (m/s)
-  84.2876   RefHt          - Reference height for horizontal wind speed      (m)
-  0.0       PLExp          - Power law exponent                              (-)
+  82.39     RefHt          - Reference height for horizontal wind speed      (m)
+  0.2       PLExp          - Power law exponent                              (-)
 ================== Parameters for Uniform wind file   [used only for WindType = 2] ============================
   "unused"  FileName_Uni   - Filename of time series data for uniform wind field.      (-)
   84.2876   RefHt_Uni      - Reference height for horizontal wind speed                (m)

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os
-from scipy import signal
+from scipy import signal, interpolate
 
 from modes import *
 from estimators import *
@@ -33,31 +33,52 @@ def load_data(uploaded_files,n1,n2):
 
 	return data
 
+
+ws = np.arange(5,21)
+ps = np.ones_like(ws)*2.6
+rpm = np.ones_like(ws)*20.45
+
+ps[7:] = 6.88 , 9.95 , 12.13 , 14.09 , 15.80 , 17.41 , 18.91 , 20.32 , 21.64
+rpm[0:7] = 9.09 , 10.91 , 12.72 , 14.52 , 16.33 , 18.12 , 19.90
+
+fps = interpolate.interp1d(ws, ps)
+frpm = interpolate.interp1d(ws, rpm)
+
+fig = plt.figure(figsize = (9,3))
+gs = gridspec.GridSpec(1,2,wspace=0.25,hspace=0.1)
+
+ax1 = plt.subplot(gs[0,0])
+ax2 = plt.subplot(gs[0,1])
+
+ax1.plot(ws,ps)
+ax2.plot(ws,rpm)
+
+ax1.set_xlabel('Wind speed (m/s)')
+ax2.set_xlabel('Wind speed (m/s)')
+
+ax1.set_ylabel('Pitch angle (deg)')
+ax2.set_ylabel('$\Omega$ (rpm)')
+
+ax1.set_title('Pitch curve')
+ax2.set_title('Rotor angular velocity curve')
+
 with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
-			\nWe are now in conditions to perform some simple simulations. Prepare all the files needed to estimate the bending moments at the tower base and the thrust force in the rotor for different wind models.
-			\nSince the wind turbine controls are not yet implemented, you will have to define the adequate initial conditions for the simulation. 
-			Additionally, as the aerodynamic torque sourced by the lift forces is still unbalanced, once again because the wind turbine controls are still not implemented, you will have to disable the generator degree of freedom to ensure that it will not accelerate indefinitely. 
-			The suggested procedure is the following:
-1. Modify the OpenFAST input file:
-	- Modify the comment line for a description of your simulation
-	- Modify the simulation time to 1000s (do not forget that we will reject the first 400s to ensure a physical solution) in the <b>SIMULATION CONTROL</b>
-	- Activate the ElastoDyn, the AeroDyn and the InflowWind modules in <b>FEATURE SWITCHES AND FLAGS</b>
-	- Include the paths to the corresponding input files <b>INPUT FILES</b> section
-1. Modify the ElastoDyn file:
-	- Disable the generator degree of freedom (GenDOF) in the <b>DEGREES OF FREEDOM</b> such that the rotor angular velocity prescribed is kept constant across the simulation
-	- Modify the initial pitch value and rotor angular velocity for the values compatible with your wind speed in the <b>INITIAL CONDITIONS</b> (if you are using the file from the previous task, do not forget to remove the tower top initial displacement).
-	- Verify that the output list defined in <b>OUTPUT</b> included the values that you want to estimate. You may find a list of all the available output variables in the file <code>09_AuxiliaryFiles\OutListParameters.xlsx</code>
-	- Ensure that you have the following outputs:
-  		- Blade 1 pitch angle: "BldPitch1"
-  		- Rotor speed, torque and thrust: "RotSpeed", "RotTorq" and "RotThrust"                         
-  		- Tower base FA and SS bending moments: "TwrBsMyt" and "TwrBsMxt"
-1. Modify the InflowWind file:
-	- Modify the wind type for a steady wind in <b>Wind model</b>
-	- Modify the wind speed reference value for your wind speed in <b>Parameters for Steady Wind Conditions</b>
-1. Run the OpenFAST simulation and upload the output files.
+			\nWe are now in conditions to perform some simple **normal operation** simulations. Prepare all the files needed to estimate the bending moments at the tower base and the thrust force in the rotor for different wind models.
+			\nSince the wind turbine controls are not yet implemented, you will have to define the adequate initial conditions (rotor angular velocity and blade pitch angle) for the simulation.
+			The normal operation values for stationary conditions for the WindPACT wind turbine is presented below and you can use the input box to estimate the relevant quantities for the wind speed you have selected:
 			</div>''',unsafe_allow_html=True)
+	st.pyplot(fig)
+	cols = st.columns(2)
+	w = cols[0].number_input('Wind speed (m/s)',5.0,20.0,10.0)
+	cols[1].markdown('\n')
+	cols[1].markdown('Pitch value: %.2f$º$'%fps(w))
+	cols[1].markdown('RPM value: %.2f rpm'%frpm(w))
+	st.write('''<div style="text-align: justify">
+			\nAdditionally, as the aerodynamic torque sourced by the lift forces is still unbalanced, once again because the wind turbine controls are still not implemented, you will have to disable the generator degree of freedom to ensure that it will not accelerate indefinitely. 
+			\nYou may find a step-by-step procedure in the hints section.
+			</div>''',unsafe_allow_html=True)	
 
 figs = []
 
@@ -76,73 +97,353 @@ PALETTE = [
 onshore_color = "#cc000033"
 offshore_color = "#0a75ad33"
 
+ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
+ref_path = ref_models['WP 1.5MW']
+
+file_OpenFAST = open('./OpenFAST_models/' + ref_path + '/' + 'TestFile.fst', 'r')
+file_struct = open('./OpenFAST_models/' + ref_path + '/' + '01_ElastoDyn' + '/' + 'WP_ElastoDyn.dat', 'r')
+file_wind =  open('./OpenFAST_models/' + ref_path + '/' + '02_InflowWind' + '/' + 'InflowWind_W0500_Steady.dat', 'r')
+file_aero = open('./OpenFAST_models/' + ref_path + '/' + '03_AeroDyn' + '/' + 'WP_AeroDyn.dat', 'r')
+
+onshore_color = "#cc000033"
+offshore_color = "#0a75ad33"
+
+checkfile=1
+
 with st.expander("**Hints**",False):
+
 	st.write('''<div style="text-align: justify">
-			\nTo solve the tasks above you will need to prepare and run 3 different OpenFAST simulations.
-			The **relevant files** to edit are listed below and the **relevant parameters and sections highlighted**.
-			\nDo not forget to modify the **simulation length** and select **only the ElastoDyn module in the OpenFAST input file**.
-			\nOnce you have the 3 output files, you may uploaded below to conduct the data analysis.
+	\nThe suggested procedure is the following:
+1. Modify the **OpenFAST input file**:
+	- Modify the comment line for a description of your simulation
+	- Modify the simulation time to 1000s (do not forget that we will reject the first 400s to ensure a physical solution is being analysed) in the <b>SIMULATION CONTROL</b>
+	- Activate the ElastoDyn, the AeroDyn and the InflowWind modules in <b>FEATURE SWITCHES AND FLAGS</b>
+	- Include the paths to the corresponding input files <b>INPUT FILES</b> section
+	</div>''',unsafe_allow_html=True)
+
+	#checkfile = st.checkbox('**Show input file details**')
+	if checkfile:
+		data = []
+		for line in file_OpenFAST:
+			data.append(line)
+
+		
+		tab1,tab2,tab3,tab4 = st.tabs(['**Simulation Control**',
+									   '**Feature switches and flags**',
+									   '**Input files**',
+									   'Output'])
+
+		all_idx = range(3,11)
+		on_sel_idx = [5]
+		off_sel_idx = []
+		with tab1:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(12,20)
+		on_sel_idx = [12,13,14]
+		off_sel_idx = []
+		with tab2:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(21,32)
+		on_sel_idx = [21,25,26]
+		off_sel_idx = []
+		with tab3:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(33,41)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab4:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		st.divider()
+
+	st.write('''<div style="text-align: justify">	
+		\n
+2. Modify the **ElastoDyn input file**:
+	- Disable the generator degree of freedom (GenDOF) in the <b>DEGREES OF FREEDOM</b> such that the rotor angular velocity prescribed is kept constant across the simulation
+	- Modify the initial pitch value and rotor angular velocity for the values compatible with your wind speed in the <b>INITIAL CONDITIONS</b>.
+	- If you are using the file from the previous task, do not forget to remove the tower top initial displacement.
+	- Set the rotor angular velocity to 0 and the blades' pitch angle to 90 degrees in the <b>INITIAL CONDITIONS</b> section.
+	- Verify that the output list defined in <b>OUTPUT</b> included the values that you want to estimate. You may find a list of all the available output variables in the file <code>09_AuxiliaryFiles\OutListParameters.xlsx</code>
+	- Ensure that you have the following outputs:
+  		- Blade 1 pitch angle: "BldPitch1"
+  		- Rotor speed, torque and thrust: "RotSpeed", "RotTorq" and "RotThrust"                         
+  		- Tower base FA and SS bending moments: "TwrBsMyt" and "TwrBsMxt"
 			</div>''',unsafe_allow_html=True)
-	c1,c2,c3 = st.columns(3)
+	#checkfile = st.checkbox('**Show ElastoDyn file details**')
+	if checkfile:
+		data = []
+		for line in file_struct:
+			data.append(line)
 
-	# -- Load data files
-	ref_models = {'NREL 5MW':'01_NREL_5MW', 'WP 1.5MW':'02_WINDPACT_1500kW'}
-	ref_model = c1.selectbox('Reference model', ref_models, index=1,disabled=True)
-	ref_path = ref_models[ref_model]
+		
+		tab1,tab2,tab3,tab4,tab5 = st.tabs(['Simulation Control',
+									   		'**Degrees of freedom**',
+									   		'**Initial conditions**',
+									   		'Turbine configuration',
+									   		'Mass and inertia'])
+		all_idx = range(3,6)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab1:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
 
-	all_dir = os.listdir('./OpenFAST_models/' + ref_path )
-	sel_dir = c2.selectbox('Available modules', all_dir, index = 0 ,disabled=True)
+		all_idx = range(9,26)
+		on_sel_idx = [9,10,11,13,14,16,17,18,19]
+		off_sel_idx = []
+		with tab2:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
 
-	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
-	sel_file = c3.selectbox('Available files', all_files, index = 1,disabled=True)
-	sel_file = 'WP_ElastoDyn.dat'
+		all_idx = range(27,44)
+		on_sel_idx = [29,30,31,34,36]
+		off_sel_idx = []
+		with tab3:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
 
-	log = open('./OpenFAST_models/' + ref_path + '/' + sel_dir + '/' + sel_file, 'r')
-	data = []
-	for line in log:
-		data.append(line)
+		all_idx = range(45,71)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab4:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
 
-	tab1,tab2,tab3,tab4 = st.tabs(['Simulation Control','**Degrees of freedom**','**Initial conditions**','Turbine configuration'])
-	for i in range(3,6):
-		tab1.write(data[i])
+		all_idx = range(72,85)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab5:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
 
-	all_idx = range(9,26)
-	on_sel_idx = [9,10,11,16,17,18,19]
-	off_sel_idx = []
+		st.divider()
 
-	with tab2:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
 
-	all_idx = range(27,44)
-	on_sel_idx = [29,30,31,34,36]
-	off_sel_idx = []
+	st.write('''<div style="text-align: justify">	
+		\n
+3. Modify the **AeroDyn input file**:
+	- Since you are making a normal operation simulation, enable the indcution wake model (WakeMod) 
+	and unsteady aerodynamics (AFAeroMod) in the <b>GENERAL CONDITIONS</b> section
+	</div>''',unsafe_allow_html=True)
+	#checkfile = st.checkbox('**Show AeroDyn file details**')
+	if checkfile:
+		data = []
+		for line in file_aero:
+			data.append(line)
 
-	with tab3:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
+		tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs(['**General options**',
+									   'Environmental conditions',
+									   'BEMT options',
+									   'Airfoil information',
+									   'Blade properties',
+									   'Tower aeroyncamis'])
 
-	all_idx = range(45,71)
-	on_sel_idx = [34,36]
-	off_sel_idx = []
-	with tab4:
-		for i in all_idx:
-			if i in on_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-			elif i in off_sel_idx:
-				st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-			else:
-				st.write(data[i])
+		all_idx = range(3,14)
+		on_sel_idx = [5,6]
+		off_sel_idx = []
+		with tab1:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+
+		all_idx = range(15,21)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab2:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(22,31)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab3:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+
+		all_idx = range(40,51)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab4:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+
+		all_idx = range(52,56)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab5:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+
+		all_idx = range(57,62)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab6:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		st.divider()
+
+
+	st.write('''<div style="text-align: justify">	
+		\n
+4. Modify the **InflowWind input file** (or use the same from Task 5):
+	- Modify the wind type for a steady wind (Simulation 1) and then for TurbSim FF (full field) wind (Simulation 2) in <b>Wind model</b>
+	- For Simulation 1, modify the wind vertical profile for the same reference wind speed you have used to generated the TurbSim data in <b>Steady wind properties</b> and set the power law exponent to 0.20.
+	- For Simulation 2, include the paths to the corresponding TurbSim generated (.bts) file in <b>Parameters for Binary TurbSim Full-Field files</b> section
+			</div>''',unsafe_allow_html=True)
+
+	#checkfile = st.checkbox('**Show InflowWind file details**')
+	if checkfile:
+		data = []
+		for line in file_wind:
+			data.append(line)
+
+
+		tab1,tab2,tab3,tab4 = st.tabs(['**Wind model**',
+									   '**Steady wind properties**',
+									   'Uniform wind properties',
+									   '**TurbSim full field**'])
+
+		all_idx = range(3,10)
+		on_sel_idx = [4]
+		off_sel_idx = []
+		with tab1:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(11,14)
+		on_sel_idx = [11,12,13]
+		off_sel_idx = []
+		with tab2:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(15,18)
+		on_sel_idx = []
+		off_sel_idx = []
+		with tab3:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		all_idx = range(19,20)
+		on_sel_idx = [19]
+		off_sel_idx = []
+		with tab4:
+			for i in all_idx:
+				if i in on_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
+				elif i in off_sel_idx:
+					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
+				else:
+					st.write(data[i])
+
+		st.divider()
+
+	st.write('''<div style="text-align: justify">	
+		\n
+5. Run the OpenFAST simulation and upload the output files.
+			</div>''',unsafe_allow_html=True)
+
 
 with st.expander("**Data analysis**",True):
 	st.write('Uploaded the output files from OpenFAST')

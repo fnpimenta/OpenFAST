@@ -45,7 +45,8 @@ def load_data(uploaded_files,n1,n2):
 with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
-			\nFor this task it is suggested to generate a full 3D wind field using TurbSim.
+			\nFor this task it is suggested to generate a full 3D wind field using TurbSim for a mean wind speed of your choice and 10\% turbulence intensity.
+			\nAfter running TurbSim, upload the .bts file in the data analysis section to visualize the generated wind field.
 			</div>''',unsafe_allow_html=True)
 
 figs = []
@@ -140,13 +141,16 @@ with st.expander("**Data analysis**",True):
 	filename = st.file_uploader("1 FA mode only ",accept_multiple_files=False)
 
 	if not filename==None:
+		fdata = TurbSimFile(filename)
+
 		cols = st.columns(2)
-		nstep = cols[0].number_input('Interval of time steps to plot',100,None,1000)
+		nstep = cols[0].number_input('Interval of time steps to plot (uniformly spaced)',10,len(fdata['t']),1000)
 		cols = st.columns(2)
+
 		with cols[0]:
 			fig = FullFieldPlot(filename,cols[0],nstep)
 			figs.append(fig)
-		fdata = TurbSimFile(filename)
+		
 
 		u = fdata.vertProfile(y_span='mid')
 
@@ -155,10 +159,11 @@ with st.expander("**Data analysis**",True):
 		fig = plt.figure(figsize = (6,6))
 
 		ax = plt.subplot()
+		npoints = int(len(fdata['t'])/nstep)
 
-		for i in range(50):
-			fu = fdata._vertline(ix0=int(len(fdata['t'])/50)*i , iy0=6)
-			ax.plot(fu[0],fdata['z'] , '--',color='k',lw=0.5)
+		for i in range(npoints):
+			fu = fdata._vertline(ix0=nstep*i , iy0=6)
+			ax.plot(fu[0],fdata['z'] , '--',color='k',lw=0.5,alpha=0.5)
 
 		ax.plot(u[1][0,:],fdata['z'],lw=4)
 		ax.fill_betweenx(fdata['z'],u[1][0,:]-u[2][0,:],u[1][0,:]+u[2][0,:],alpha=0.25)
