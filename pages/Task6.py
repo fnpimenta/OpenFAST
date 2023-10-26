@@ -22,7 +22,6 @@ st.title('Task 6 - Normal operation simulations with prescribed initial conditio
 
 # -- Load data files
 @st.cache_data()
-
 def load_data(uploaded_files,n1,n2):
 	try:
 		data = pd.read_csv(uploaded_file,skiprows=n1,nrows=n2-n1,delimiter="\s+",encoding_errors='replace')
@@ -33,36 +32,41 @@ def load_data(uploaded_files,n1,n2):
 
 	return data
 
+@st.cache_data()
+def WPDataPlot(w):
+	ws = np.arange(5,21)
+	ps = np.ones_like(ws)*2.6
+	rpm = np.ones_like(ws)*20.45
 
-ws = np.arange(5,21)
-ps = np.ones_like(ws)*2.6
-rpm = np.ones_like(ws)*20.45
+	ps[7:] = 6.88 , 9.95 , 12.13 , 14.09 , 15.80 , 17.41 , 18.91 , 20.32 , 21.64
+	rpm[0:7] = 9.09 , 10.91 , 12.72 , 14.52 , 16.33 , 18.12 , 19.90
 
-ps[7:] = 6.88 , 9.95 , 12.13 , 14.09 , 15.80 , 17.41 , 18.91 , 20.32 , 21.64
-rpm[0:7] = 9.09 , 10.91 , 12.72 , 14.52 , 16.33 , 18.12 , 19.90
+	fps = interpolate.interp1d(ws, ps)
+	frpm = interpolate.interp1d(ws, rpm)
 
-fps = interpolate.interp1d(ws, ps)
-frpm = interpolate.interp1d(ws, rpm)
+	fig = plt.figure(figsize = (9,3))
+	gs = gridspec.GridSpec(1,2,wspace=0.25,hspace=0.1)
 
-fig = plt.figure(figsize = (9,3))
-gs = gridspec.GridSpec(1,2,wspace=0.25,hspace=0.1)
+	ax1 = plt.subplot(gs[0,0])
+	ax2 = plt.subplot(gs[0,1])
 
-ax1 = plt.subplot(gs[0,0])
-ax2 = plt.subplot(gs[0,1])
+	ax1.plot(ws,ps)
+	ax2.plot(ws,rpm)
 
-ax1.plot(ws,ps)
-ax2.plot(ws,rpm)
+	ax1.set_xlabel('Wind speed (m/s)')
+	ax2.set_xlabel('Wind speed (m/s)')
 
-ax1.set_xlabel('Wind speed (m/s)')
-ax2.set_xlabel('Wind speed (m/s)')
+	ax1.set_ylabel('Pitch angle (deg)')
+	ax2.set_ylabel('$\Omega$ (rpm)')
 
-ax1.set_ylabel('Pitch angle (deg)')
-ax2.set_ylabel('$\Omega$ (rpm)')
+	ax1.set_title('Pitch curve')
+	ax2.set_title('Rotor angular velocity curve')
 
-ax1.set_title('Pitch curve')
-ax2.set_title('Rotor angular velocity curve')
+	ax1.plot(w,fps(w),'or')
+	ax2.plot(w,frpm(w),'or')
 
-plt.show()
+	return fps , frpm , fig
+
 
 with st.expander("**Objective**",True):
 
@@ -71,12 +75,16 @@ with st.expander("**Objective**",True):
 			\nSince the wind turbine controls are not yet implemented, you will have to define the adequate initial conditions (rotor angular velocity and blade pitch angle) for the simulation.
 			The normal operation values for stationary conditions for the WindPACT wind turbine is presented below and you can use the input box to estimate the relevant quantities for the wind speed you have selected:
 			</div>''',unsafe_allow_html=True)
-	st.pyplot(fig)
 	cols = st.columns(2)
 	w = cols[0].number_input('Wind speed (m/s)',5.0,20.0,10.0)
+	fps,frpm,fig = WPDataPlot(w)
+
 	cols[1].markdown('\n')
 	cols[1].markdown('Pitch value: %.2f$º$'%fps(w))
 	cols[1].markdown('RPM value: %.2f rpm'%frpm(w))
+
+	st.pyplot(fig)
+
 	st.write('''<div style="text-align: justify">
 			\nAdditionally, as the aerodynamic torque sourced by the lift forces is still unbalanced, once again because the wind turbine controls are still not implemented, you will have to disable the generator degree of freedom to ensure that it will not accelerate indefinitely. 
 			\nYou may find a step-by-step procedure in the hints section.

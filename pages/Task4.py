@@ -22,7 +22,6 @@ st.title('Task 4 - Free decay analysis with AeroDyn')
 
 # -- Load data files
 @st.cache_data()
-
 def load_data(uploaded_files,n1,n2):
 	try:
 		data = pd.read_csv(uploaded_file,skiprows=n1,nrows=n2-n1,delimiter="\s+",encoding_errors='replace')
