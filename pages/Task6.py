@@ -199,7 +199,6 @@ with st.expander("**Hints**",False):
 	- Disable the generator degree of freedom (GenDOF) in the <b>DEGREES OF FREEDOM</b> such that the rotor angular velocity prescribed is kept constant across the simulation
 	- Modify the initial pitch value and rotor angular velocity for the values compatible with your wind speed in the <b>INITIAL CONDITIONS</b>.
 	- If you are using the file from the previous task, do not forget to remove the tower top initial displacement.
-	- Set the rotor angular velocity to 0 and the blades' pitch angle to 90 degrees in the <b>INITIAL CONDITIONS</b> section.
 	- Verify that the output list defined in <b>OUTPUT</b> included the values that you want to estimate. You may find a list of all the available output variables in the file <code>09_AuxiliaryFiles\OutListParameters.xlsx</code>
 	- Ensure that you have the following outputs:
   		- Blade 1 pitch angle: "BldPitch1"
@@ -456,7 +455,7 @@ with st.expander("**Hints**",False):
 
 
 with st.expander("**Data analysis**",True):
-	st.write('Uploaded the output files from OpenFAST')
+	st.write('Upload the output files from OpenFAST')
 
 	cols0 = st.columns(2)
 	file = []

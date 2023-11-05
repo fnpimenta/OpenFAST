@@ -251,7 +251,7 @@ with st.expander("**Hints**",False):
 
 
 with st.expander("**Data analysis**",True):
-	st.write('Uploaded the output files from OpenFAST')
+	st.write('Upload the output files from OpenFAST')
 
 	cols0 = st.columns(2)
 	file = []
