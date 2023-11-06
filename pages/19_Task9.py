@@ -224,7 +224,7 @@ with st.expander("**Data analysis**",True):
 	file.append(cols0[2].file_uploader("Controller 2x less sensitive",accept_multiple_files=False))
 
 	error_check = 0
-	input_error = np.zeros(6)-2
+	input_error = np.zeros(6)-3
 
 	for i in range(len(file)):
 		if not(file[i]==None):
