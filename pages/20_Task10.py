@@ -207,7 +207,6 @@ with st.expander("**Data analysis**",True):
 		t_max = cols[1].number_input('Last time instant to plot',0.0,1000.0,1000.0)
 		time_filter = (data.Time>=t_min) & (data.Time<=t_max)
 		
-
 		v_mean = 0.2*cols[0].number_input('Reference wind speed',min_value=10,max_value=50,value=50)
 		k_weibull = cols[1].number_input('Weibull scale parameter',min_value=0.1,max_value=10.0,value=2.0)
 
@@ -244,8 +243,6 @@ with st.expander("**Data analysis**",True):
 				for k in range(Count):
 					Count_all[j] += rf[k][1] 
 					
-			Count_all /= Count_all[-1]
-
 		fig = plt.figure(figsize = (12,8))
 		gs = gridspec.GridSpec(2, 2)
 
