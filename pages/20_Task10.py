@@ -59,9 +59,8 @@ def load_data(uploaded_files,n1,n2):
 with st.expander("**Objective**",True):
 
 	st.write('''<div style="text-align: justify">
-			\nTo study the impact of the pitch control parameters on the response, 
-			repeat Task 7 but with a higher and lower sensitivity of the pitch system. 
-			For clarity, it is suggested that you use an high wind speed (for instance, 16m/s), ensuring that the wind turbine is operating in Region 3, where the pitch control impact is more visible.
+			\nTo simulate the design process for fatigue evaluation, use the bending moments time series that you have generated in **Task 7** to estimate the corresponding fatigue damage. 
+			Combining this information with the expected number of occurrences of such an event obtained from a Rayleigh distribution with $k=2.5$, compute the contribution for the overall fatigue damage of this event.
 			\nYou may find a step-by-step procedure in the hints section.
 			</div>''',unsafe_allow_html=True)
 
@@ -99,98 +98,11 @@ checkfile=1
 with st.expander("**Hints**",False):
 
 	st.write('''<div style="text-align: justify">
-	\nThe suggested procedure is the following:
-1. Modify the **OpenFAST input file**:
-	- Modify the comment line for a description of your simulation
+	\nTo realise this task you should already have all the necessary information:
+- Upload the output file from Task 7 in the upload box below
+- Define the reference wind speed and the Weibull scale parameter and use the Weibull plot to obtain the estimated frequency of occurrence
+- Estimate the total fatigue damage multiplying the 10 minutes fatigue damage by the expected number of occurrences in 25 years
 	</div>''',unsafe_allow_html=True)
-
-	st.divider()
-
-	st.write('''<div style="text-align: justify">	
-		\n
-2. Modify the **ServoDyn input file**:
-	- Modify the pitch control parameters in the <b>SIMPLE VARIABLE-SPEED TORQUE CONTROL</b> section such that:
-		- The pitch control is 2x more sensitive to variations in the wind speed (Simulation 1)                    
-		- The pitch control is 2x less sensitive to variations in the wind speed (Simulation 2)
-	- To make this change, you may modify the gain on TF 1 on the pitch input file
-			</div>''',unsafe_allow_html=True)
-	
-	st.divider()
-
-	st.write('''<div style="text-align: justify">	
-		\n
-4. Modify the **InflowWind input file** (or use the same from Task 6):
-	- Modify the wind type for TurbSim FF (full field) wind in <b>Wind model</b>
-	- Include the paths to the corresponding TurbSim generated (.bts) with an high wind speed (for instance, 16 m/s) file in <b>Parameters for Binary TurbSim Full-Field files</b> section
-	(you may have to generate this wind field)
-			</div>''',unsafe_allow_html=True)
-
-	#checkfile = st.checkbox('**Show InflowWind file details**')
-	if checkfile:
-		data = []
-		for line in file_wind:
-			data.append(line)
-
-
-		tab1,tab2,tab3,tab4 = st.tabs(['**Wind model**',
-									   'Steady wind properties',
-									   'Uniform wind properties',
-									   '**TurbSim full field**'])
-
-		all_idx = range(3,10)
-		on_sel_idx = [4]
-		off_sel_idx = []
-		with tab1:
-			for i in all_idx:
-				if i in on_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-				elif i in off_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-				else:
-					st.write(data[i])
-
-		all_idx = range(11,14)
-		on_sel_idx = []
-		off_sel_idx = []
-		with tab2:
-			for i in all_idx:
-				if i in on_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-				elif i in off_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-				else:
-					st.write(data[i])
-
-		all_idx = range(15,18)
-		on_sel_idx = []
-		off_sel_idx = []
-		with tab3:
-			for i in all_idx:
-				if i in on_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-				elif i in off_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-				else:
-					st.write(data[i])
-
-		all_idx = range(19,20)
-		on_sel_idx = [19]
-		off_sel_idx = []
-		with tab4:
-			for i in all_idx:
-				if i in on_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(onshore_color,data[i]),unsafe_allow_html=True)
-				elif i in off_sel_idx:
-					st.write('<span style="background-color: %s">%s</span>'%(offshore_color,data[i]),unsafe_allow_html=True)
-				else:
-					st.write(data[i])
-
-		st.divider()
-
-	st.write('''<div style="text-align: justify">	
-		\n
-5. Run the OpenFAST simulation and upload the output files.
-			</div>''',unsafe_allow_html=True)
 
 
 with st.expander("**Data analysis**",True):
