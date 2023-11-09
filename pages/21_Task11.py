@@ -18,7 +18,7 @@ apptitle = 'OpenFAST Course - Task 11'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon)
 
-st.title('Task 11 - Wind turbin idling simulation')
+st.title('Task 11 - Wind turbine idling simulation')
 
 # -- Load data files
 @st.cache_data()
