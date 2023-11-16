@@ -14,7 +14,7 @@ from Print import *
 from PIL import Image
 
 # -- Set page config
-apptitle = 'OpenFAST Course - Task 13'
+apptitle = 'OpenFAST Course - Task 14'
 icon = Image.open('feup_logo.ico')
 st.set_page_config(page_title=apptitle, page_icon=icon)
 
