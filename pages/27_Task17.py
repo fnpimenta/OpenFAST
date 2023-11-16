@@ -254,7 +254,7 @@ with st.expander("**Data analysis**",True):
 
 	cols = st.columns(2)
 	file = []
-	file.append(cols[0].file_uploader("Irregular waves simulation",accept_multiple_files=False))
+	file.append(cols[0].file_uploader("Pierson-Moskowitz simulation",accept_multiple_files=False))
 	file.append(cols[1].file_uploader("White noise simulation",accept_multiple_files=False))
 
 	error_check = 0
