@@ -374,10 +374,10 @@ with st.expander("**Data analysis**",True):
 			ax6.annotate('No data found for tower top FA displacement',(0.5,0.5),ha='center',xycoords='axes fraction')
 
 		if input_error[6] == 0:
-			ax6.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax7.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
 	
 		if input_error[7] == 0:
-			ax6.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax8.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
 
 		ax7.legend(loc='upper center',
 		 			bbox_to_anchor=(1.1,-0.2),

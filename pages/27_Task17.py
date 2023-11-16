@@ -252,11 +252,13 @@ with st.expander("**Hints**",False):
 with st.expander("**Data analysis**",True):
 	st.write('Upload the output files from OpenFAST')
 
+	cols = st.columns(2)
 	file = []
-	file.append(st.file_uploader("Irregular waves simulation",accept_multiple_files=False))
+	file.append(cols[0].file_uploader("Irregular waves simulation",accept_multiple_files=False))
+	file.append(cols[1].file_uploader("White noise simulation",accept_multiple_files=False))
 
 	error_check = 0
-	input_error = np.zeros(10)-1
+	input_error = np.zeros(10)-2
 
 	nmaxs = np.zeros(len(file))
 
@@ -296,7 +298,7 @@ with st.expander("**Data analysis**",True):
 		ax9 = plt.subplot(gs[0,0])
 		ax10 = plt.subplot(gs[0,1])	
 
-		labels = ['Onshore simulation', 'Offshore simulation']
+		labels = ['Pierson-Moskowitz spectrum', 'White noise spectrum']
 		for i in range(len(file)):
 			if not(file[i]==None):
 				
@@ -398,16 +400,23 @@ with st.expander("**Data analysis**",True):
 			ax6.annotate('No data found for tower top FA displacement',(0.5,0.5),ha='center',xycoords='axes fraction')
 
 		if input_error[6] == 0:
-			ax6.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax7.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
 	
 		if input_error[7] == 0:
-			ax6.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax8.annotate('No data found for tower FA bending moments',(0.5,0.5),ha='center',xycoords='axes fraction')
 
 		if input_error[8] == 0:
-			ax6.annotate('No data found for the wave elevation',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax9.annotate('No data found for the wave elevation',(0.5,0.5),ha='center',xycoords='axes fraction')
 	
 		if input_error[9] == 0:
-			ax6.annotate('No data found for the wave elevation',(0.5,0.5),ha='center',xycoords='axes fraction')
+			ax10.annotate('No data found for the wave elevation',(0.5,0.5),ha='center',xycoords='axes fraction')
+
+		ax7.legend(loc='upper center',
+		 			bbox_to_anchor=(1.1,-0.2),
+					ncol=3,
+					fancybox=False,
+					framealpha=1,
+					frameon=False)
 
 		st.pyplot(fig)
 
