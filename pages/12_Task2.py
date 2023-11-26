@@ -82,7 +82,7 @@ with st.expander("**Hints**",False):
 	ref_model = c1.selectbox('Reference model', ref_models, index=1,disabled=True)
 	ref_path = ref_models[ref_model]
 
-	all_dir = os.listdir('./OpenFAST_models/' + ref_path )
+	all_dir = np.sort(os.listdir('./OpenFAST_models/' + ref_path ))
 	sel_dir = c2.selectbox('Available modules', all_dir, index = 0 ,disabled=True)
 
 	all_files = os.listdir('./OpenFAST_models/' + ref_path + '/' + sel_dir)
